@@ -15,46 +15,44 @@ export class FrontendCloudfront extends Construct {
   constructor(scope: Construct, id: string, props: FrontendCloudfrontProps) {
     super(scope, id);
 
-    const oac = new cloudfront.CfnOriginAccessControl(this, "FrontendOAC", {
-      originAccessControlConfig: {
-        name: `FrontendOAC-${props.environment}`,
-        originAccessControlOriginType: "s3",
-        signingBehavior: "always",
-        signingProtocol: "sigv4",
-      },
-    });
-
     this.distribution = new cloudfront.Distribution(
       this,
       "FrontendDistribution",
       {
         comment: `Frontend distribution for ${props.environment}`,
-        defaultBehavior: {
-          origin: origins.S3BucketOrigin.withOriginAccessControl(props.bucket, {
-            originAccessLevels: [
-              cloudfront.AccessLevel.READ,
-              cloudfront.AccessLevel.LIST,
-            ],
-          }),
-          viewerProtocolPolicy:
-            cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-        },
+        defaultBehavior: this.getDefaultBehavior(props.bucket),
         defaultRootObject: "index.html",
-        errorResponses: [
-          {
-            httpStatus: 403,
-            responseHttpStatus: 200,
-            responsePagePath: "/index.html",
-            ttl: cdk.Duration.minutes(0),
-          },
-          {
-            httpStatus: 404,
-            responseHttpStatus: 200,
-            responsePagePath: "/index.html",
-            ttl: cdk.Duration.minutes(0),
-          },
-        ],
+        errorResponses: this.getErrorResponse(),
       },
     );
+  }
+
+  private getDefaultBehavior(bucket: s3.Bucket): cloudfront.BehaviorOptions {
+    return {
+      origin: origins.S3BucketOrigin.withOriginAccessControl(bucket, {
+        originAccessLevels: [
+          cloudfront.AccessLevel.READ,
+          cloudfront.AccessLevel.LIST,
+        ],
+      }),
+      viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+    };
+  }
+
+  private getErrorResponse(): cloudfront.ErrorResponse[] {
+    return [
+      {
+        httpStatus: 403,
+        responseHttpStatus: 200,
+        responsePagePath: "/index.html",
+        ttl: cdk.Duration.minutes(0),
+      },
+      {
+        httpStatus: 404,
+        responseHttpStatus: 200,
+        responsePagePath: "/index.html",
+        ttl: cdk.Duration.minutes(0),
+      },
+    ];
   }
 }
