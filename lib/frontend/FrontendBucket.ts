@@ -1,6 +1,6 @@
 import { Construct } from "constructs";
 import * as s3 from "aws-cdk-lib/aws-s3";
-import { RemovalPolicy, Tags } from "aws-cdk-lib";
+import { RemovalPolicy } from "aws-cdk-lib";
 
 interface FrontendBucketProps {
   appName: string;
@@ -31,10 +31,5 @@ export class FrontendBucket extends Construct {
         autoDeleteObjects: true,
       },
     );
-
-    for (const bucket of [this.frontendBucket, this.pipelineArtifactBucket]) {
-      Tags.of(bucket).add("Application", props.appName);
-      Tags.of(bucket).add("Environment", props.environment);
-    }
   }
 }

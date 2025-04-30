@@ -3,10 +3,8 @@ import * as s3 from "aws-cdk-lib/aws-s3";
 import * as codepipeline from "aws-cdk-lib/aws-codepipeline";
 import * as codepipeline_actions from "aws-cdk-lib/aws-codepipeline-actions";
 import * as codebuild from "aws-cdk-lib/aws-codebuild";
-import { Tags } from "aws-cdk-lib";
 
 interface FrontendCodePipelineProps {
-  appName: string;
   environment: string;
   githubOwner: string;
   githubRepo: string;
@@ -34,9 +32,6 @@ export class FrontendCodePipeline extends Construct {
     this.addSourceStage(props, sourceOutput);
     this.addBuildStage(props, sourceOutput, buildOutput);
     this.addDeployStage(props, buildOutput);
-
-    Tags.of(this.pipeline).add("Application", props.appName);
-    Tags.of(this.pipeline).add("Environment", props.environment);
   }
 
   private addSourceStage(

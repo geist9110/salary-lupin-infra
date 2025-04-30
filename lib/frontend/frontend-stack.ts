@@ -3,6 +3,7 @@ import { Construct } from "constructs";
 import { FrontendCodeBuild } from "./FrontendCodeBuild";
 import { FrontendBucket } from "./FrontendBucket";
 import { FrontendCodePipeline } from "./FrontendCodePipeline";
+import { applyCommonTags } from "../util/applyCommonTags";
 
 interface FrontendStackProps extends StackProps {
   appName: string;
@@ -23,13 +24,11 @@ export class FrontendStack extends Stack {
     });
 
     const codeBuild = new FrontendCodeBuild(this, "CodeBuild", {
-      appName: props.appName,
       environment: props.environment,
       artifactBucket: buckets.pipelineArtifactBucket,
     });
 
-    new FrontendCodePipeline(this, "Pipeline", {
-      appName: props.appName,
+    const codePipeline = new FrontendCodePipeline(this, "Pipeline", {
       environment: props.environment,
       githubOwner: props.githubOwner,
       githubRepo: props.githubFrontendRepo,
@@ -38,6 +37,18 @@ export class FrontendStack extends Stack {
       buildProject: codeBuild.build,
       targetBucket: buckets.frontendBucket,
       artifactBucket: buckets.pipelineArtifactBucket,
+    });
+
+    applyCommonTags({
+      resources: [
+        buckets.frontendBucket,
+        buckets.pipelineArtifactBucket,
+        codeBuild.role,
+        codeBuild.build,
+        codePipeline.pipeline,
+      ],
+      appName: props.appName,
+      environment: props.environment,
     });
   }
 }
