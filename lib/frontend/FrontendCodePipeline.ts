@@ -5,7 +5,7 @@ import * as codepipeline_actions from "aws-cdk-lib/aws-codepipeline-actions";
 import * as codebuild from "aws-cdk-lib/aws-codebuild";
 
 interface FrontendCodePipelineProps {
-  env: string;
+  environment: string;
   githubOwner: string;
   githubRepo: string;
   githubBranch: string;
@@ -25,7 +25,7 @@ export class FrontendCodePipeline extends Construct {
     const buildOutput = new codepipeline.Artifact();
 
     this.pipeline = new codepipeline.Pipeline(this, "FrontendPipeline", {
-      pipelineName: `frontend-pipeline-${props.env}`,
+      pipelineName: `frontend-pipeline-${props.environment}`,
       artifactBucket: props.artifactBucket,
     });
 
