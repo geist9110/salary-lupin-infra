@@ -13,6 +13,9 @@ interface FrontendStackProps extends StackProps {
   githubFrontendRepo: string;
   githubConnectionArn: string;
   githubBranch: string;
+  certificateArn: string;
+  hostedZoneId: string;
+  hostedZoneName: string;
 }
 
 export class FrontendStack extends Stack {
@@ -43,6 +46,9 @@ export class FrontendStack extends Stack {
     const cloudfront = new FrontendCloudfront(this, "Cloudfront", {
       environment: props.environment,
       bucket: buckets.frontendBucket,
+      certificateArn: props.certificateArn,
+      hostedZoneId: props.hostedZoneId,
+      hostedZoneName: props.hostedZoneName,
     });
 
     applyCommonTags({
