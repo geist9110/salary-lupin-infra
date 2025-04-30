@@ -30,12 +30,14 @@ if (
   throw new Error(`Check ${environment}.env file`);
 }
 
-new DomainStack(app, "DomainStack", {
+const domainStack = new DomainStack(app, "DomainStack", {
+  environment: environment,
   domainName: domainName,
   env: {
     account: accountId,
     region: "us-east-1",
   },
+  crossRegionReferences: true,
 });
 
 new FrontendStack(app, `FrontendStack-${environment}`, {
@@ -45,7 +47,12 @@ new FrontendStack(app, `FrontendStack-${environment}`, {
   githubFrontendRepo: githubRepo,
   githubConnectionArn: githubConnectionArn,
   githubBranch: githubBranch,
+  certificateArn: domainStack.certificateArn,
+  hostedZoneId: domainStack.hostedZoneId,
+  hostedZoneName: domainStack.hostedZoneName,
   env: {
+    account: accountId,
     region: "ap-northeast-2",
   },
+  crossRegionReferences: true,
 });
