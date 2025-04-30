@@ -10,14 +10,14 @@ export class FrontendBucket extends Construct {
     super(scope, id);
 
     this.frontendBucket = new s3.Bucket(this, "FrontendBucket", {
-      bucketName: process.env.FRONTEND_BUCKET_NAME,
+      bucketName: `salary-lupin-${environment}-frontend-bucket`,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
     });
 
     this.pipelineArtifactBucket = new s3.Bucket(this, "PipelineSourceBucket", {
-      bucketName: `frontend-codepipeline-source-${environment}`,
+      bucketName: `salary-lupin-${environment}-pipeline-artifact-bucket`,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
