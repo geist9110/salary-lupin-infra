@@ -4,7 +4,7 @@ import { RemovalPolicy } from "aws-cdk-lib";
 
 export class FrontendBucket extends Construct {
   public readonly frontendBucket: s3.Bucket;
-  public readonly pipelineSourceBucket: s3.Bucket;
+  public readonly pipelineArtifactBucket: s3.Bucket;
 
   constructor(scope: Construct, id: string, env: string) {
     super(scope, id);
@@ -16,7 +16,7 @@ export class FrontendBucket extends Construct {
       autoDeleteObjects: true,
     });
 
-    this.pipelineSourceBucket = new s3.Bucket(this, "PipelineSourceBucket", {
+    this.pipelineArtifactBucket = new s3.Bucket(this, "PipelineSourceBucket", {
       bucketName: `frontend-codepipeline-source-${env}`,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: RemovalPolicy.DESTROY,

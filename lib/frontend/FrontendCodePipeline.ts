@@ -12,6 +12,7 @@ interface FrontendCodePipelineProps {
   githubConnectionArn: string;
   buildProject: codebuild.PipelineProject;
   targetBucket: s3.Bucket;
+  artifactBucket: s3.Bucket;
 }
 
 export class FrontendCodePipeline extends Construct {
@@ -25,6 +26,7 @@ export class FrontendCodePipeline extends Construct {
 
     this.pipeline = new codepipeline.Pipeline(this, "FrontendPipeline", {
       pipelineName: `frontend-pipeline-${props.env}`,
+      artifactBucket: props.artifactBucket,
     });
 
     this.pipeline.addStage({

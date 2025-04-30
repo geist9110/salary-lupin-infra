@@ -22,7 +22,8 @@ export class FrontendStack extends Stack {
 
     const buckets = new FrontendBucket(this, "Bucket", env);
     const codeBuild = new FrontendCodeBuild(this, "CodeBuild", env);
-    const codePipeline = new FrontendCodePipeline(this, "Pipeline", {
+
+    new FrontendCodePipeline(this, "Pipeline", {
       env: env,
       githubOwner: githubOwner,
       githubRepo: githubFrontendRepo,
@@ -30,6 +31,7 @@ export class FrontendStack extends Stack {
       githubConnectionArn: githubConnectionArn,
       buildProject: codeBuild.build,
       targetBucket: buckets.frontendBucket,
+      artifactBucket: buckets.pipelineArtifactBucket,
     });
   }
 }
