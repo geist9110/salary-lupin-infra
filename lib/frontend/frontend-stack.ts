@@ -5,6 +5,7 @@ import { FrontendBucket } from "./FrontendBucket";
 import { FrontendCodePipeline } from "./FrontendCodePipeline";
 
 interface FrontendStackProps extends StackProps {
+  appName: string;
   environment: string;
   githubOwner: string;
   githubFrontendRepo: string;
@@ -16,7 +17,11 @@ export class FrontendStack extends Stack {
   constructor(scope: Construct, id: string, props: FrontendStackProps) {
     super(scope, id, props);
 
-    const buckets = new FrontendBucket(this, "Bucket", props.environment);
+    const buckets = new FrontendBucket(this, "Bucket", {
+      appName: props.appName,
+      environment: props.environment,
+    });
+
     const codeBuild = new FrontendCodeBuild(
       this,
       "CodeBuild",
