@@ -6,7 +6,7 @@ export class FrontendBucket extends Construct {
   public readonly frontendBucket: s3.Bucket;
   public readonly pipelineArtifactBucket: s3.Bucket;
 
-  constructor(scope: Construct, id: string, env: string) {
+  constructor(scope: Construct, id: string, environment: string) {
     super(scope, id);
 
     this.frontendBucket = new s3.Bucket(this, "FrontendBucket", {
@@ -17,7 +17,7 @@ export class FrontendBucket extends Construct {
     });
 
     this.pipelineArtifactBucket = new s3.Bucket(this, "PipelineSourceBucket", {
-      bucketName: `frontend-codepipeline-source-${env}`,
+      bucketName: `frontend-codepipeline-source-${environment}`,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
