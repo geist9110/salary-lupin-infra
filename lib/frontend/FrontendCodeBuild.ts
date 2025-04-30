@@ -26,7 +26,7 @@ export class FrontendCodeBuild extends Construct {
           NODE_ENV: { value: env },
         },
       },
-      buildSpec: codebuild.BuildSpec.fromSourceFilename("buildspec.yml"),
+      buildSpec: codebuild.BuildSpec.fromSourceFilename("buildspec.yaml"),
     });
   }
 }
