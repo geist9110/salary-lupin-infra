@@ -29,6 +29,7 @@ export class FrontendStack extends Stack {
     });
 
     new FrontendCodePipeline(this, "Pipeline", {
+      appName: props.appName,
       environment: props.environment,
       githubOwner: props.githubOwner,
       githubRepo: props.githubFrontendRepo,
