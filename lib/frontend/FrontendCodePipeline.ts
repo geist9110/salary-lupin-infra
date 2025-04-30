@@ -29,6 +29,15 @@ export class FrontendCodePipeline extends Construct {
       artifactBucket: props.artifactBucket,
     });
 
+    this.addSourceStage(props, sourceOutput);
+    this.addBuildStage(props, sourceOutput, buildOutput);
+    this.addDeployStage(props, buildOutput);
+  }
+
+  private addSourceStage(
+    props: FrontendCodePipelineProps,
+    output: codepipeline.Artifact,
+  ) {
     this.pipeline.addStage({
       stageName: "Source",
       actions: [
@@ -38,29 +47,40 @@ export class FrontendCodePipeline extends Construct {
           repo: props.githubRepo,
           branch: props.githubBranch,
           connectionArn: props.githubConnectionArn,
-          output: sourceOutput,
+          output: output,
         }),
       ],
     });
+  }
 
+  private addBuildStage(
+    props: FrontendCodePipelineProps,
+    input: codepipeline.Artifact,
+    output: codepipeline.Artifact,
+  ) {
     this.pipeline.addStage({
       stageName: "Build",
       actions: [
         new codepipeline_actions.CodeBuildAction({
           actionName: "Build_Frontend",
-          input: sourceOutput,
-          outputs: [buildOutput],
+          input,
+          outputs: [output],
           project: props.buildProject,
         }),
       ],
     });
+  }
 
+  private addDeployStage(
+    props: FrontendCodePipelineProps,
+    input: codepipeline.Artifact,
+  ) {
     this.pipeline.addStage({
       stageName: "Deploy",
       actions: [
         new codepipeline_actions.S3DeployAction({
           actionName: "DeployToS3",
-          input: buildOutput,
+          input,
           bucket: props.targetBucket,
         }),
       ],
