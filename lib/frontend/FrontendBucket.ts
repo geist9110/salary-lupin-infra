@@ -21,12 +21,16 @@ export class FrontendBucket extends Construct {
       autoDeleteObjects: true,
     });
 
-    this.pipelineArtifactBucket = new s3.Bucket(this, "PipelineSourceBucket", {
-      bucketName: `${props.appName}-${props.environment}-pipeline-artifact-bucket`,
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      removalPolicy: RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
-    });
+    this.pipelineArtifactBucket = new s3.Bucket(
+      this,
+      "PipelineArtifactBucket",
+      {
+        bucketName: `${props.appName}-${props.environment}-pipeline-artifact-bucket`,
+        blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+        removalPolicy: RemovalPolicy.DESTROY,
+        autoDeleteObjects: true,
+      },
+    );
 
     for (const bucket of [this.frontendBucket, this.pipelineArtifactBucket]) {
       Tags.of(bucket).add("Application", props.appName);
