@@ -22,11 +22,11 @@ export class FrontendStack extends Stack {
       environment: props.environment,
     });
 
-    const codeBuild = new FrontendCodeBuild(
-      this,
-      "CodeBuild",
-      props.environment,
-    );
+    const codeBuild = new FrontendCodeBuild(this, "CodeBuild", {
+      appName: props.appName,
+      environment: props.environment,
+      artifactBucket: buckets.pipelineArtifactBucket,
+    });
 
     new FrontendCodePipeline(this, "Pipeline", {
       env: props.environment,
