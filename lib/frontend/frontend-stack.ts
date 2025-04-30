@@ -4,6 +4,7 @@ import { FrontendCodeBuild } from "./FrontendCodeBuild";
 import { FrontendBucket } from "./FrontendBucket";
 import { FrontendCodePipeline } from "./FrontendCodePipeline";
 import { applyCommonTags } from "../util/applyCommonTags";
+import { FrontendCloudfront } from "./FrontendCloudfront";
 
 interface FrontendStackProps extends StackProps {
   appName: string;
@@ -39,6 +40,11 @@ export class FrontendStack extends Stack {
       artifactBucket: buckets.pipelineArtifactBucket,
     });
 
+    const cloudfront = new FrontendCloudfront(this, "Cloudfront", {
+      environment: props.environment,
+      bucket: buckets.frontendBucket,
+    });
+
     applyCommonTags({
       resources: [
         buckets.frontendBucket,
@@ -46,6 +52,7 @@ export class FrontendStack extends Stack {
         codeBuild.role,
         codeBuild.build,
         codePipeline.pipeline,
+        cloudfront.distribution,
       ],
       appName: props.appName,
       environment: props.environment,
