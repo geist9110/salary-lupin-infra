@@ -4,31 +4,31 @@ import { FrontendCodeBuild } from "./FrontendCodeBuild";
 import { FrontendBucket } from "./FrontendBucket";
 import { FrontendCodePipeline } from "./FrontendCodePipeline";
 
+interface FrontendStackProps extends StackProps {
+  environment: string;
+  githubOwner: string;
+  githubFrontendRepo: string;
+  githubConnectionArn: string;
+  githubBranch: string;
+}
+
 export class FrontendStack extends Stack {
-  constructor(scope: Construct, id: string, props?: StackProps) {
+  constructor(scope: Construct, id: string, props: FrontendStackProps) {
     super(scope, id, props);
 
-    const env = process.env.NODE_ENV ?? "dev";
-    const githubOwner = process.env.GITHUB_OWNER;
-    const githubFrontendRepo = process.env.GITHUB_REPO_FRONTEND;
-    const githubConnectionArn = process.env.GITHUB_CONNECTION_ARN;
-    const githubBranch = process.env.BRANCH;
-
-    if (!githubOwner) throw new Error("GITHUB_OWNER Not Found");
-    if (!githubFrontendRepo) throw new Error("GITHUB_REPO_FRONTEND Not Found");
-    if (!githubConnectionArn)
-      throw new Error("GITHUB_CONNECTION_ARN Not Found");
-    if (!githubBranch) throw new Error("BRANCH Not Found");
-
-    const buckets = new FrontendBucket(this, "Bucket", env);
-    const codeBuild = new FrontendCodeBuild(this, "CodeBuild", env);
+    const buckets = new FrontendBucket(this, "Bucket", props.environment);
+    const codeBuild = new FrontendCodeBuild(
+      this,
+      "CodeBuild",
+      props.environment,
+    );
 
     new FrontendCodePipeline(this, "Pipeline", {
-      env: env,
-      githubOwner: githubOwner,
-      githubRepo: githubFrontendRepo,
-      githubBranch: githubBranch,
-      githubConnectionArn: githubConnectionArn,
+      env: props.environment,
+      githubOwner: props.githubOwner,
+      githubRepo: props.githubFrontendRepo,
+      githubBranch: props.githubBranch,
+      githubConnectionArn: props.githubConnectionArn,
       buildProject: codeBuild.build,
       targetBucket: buckets.frontendBucket,
       artifactBucket: buckets.pipelineArtifactBucket,

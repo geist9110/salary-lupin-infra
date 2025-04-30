@@ -3,12 +3,26 @@ import * as cdk from "aws-cdk-lib";
 import { FrontendStack } from "../lib/frontend/frontend-stack";
 import * as dotenv from "dotenv";
 
-const env = process.env.NODE_ENV ?? "dev";
-dotenv.config({ path: `env/${env}.env` });
+const environment = process.env.NODE_ENV ?? "dev";
+dotenv.config({ path: `env/${environment}.env` });
 
 const app = new cdk.App();
 
-new FrontendStack(app, `FrontendStack-${env}`, {
+const githubOwner = process.env.GITHUB_OWNER;
+const githubRepo = process.env.GITHUB_REPO_FRONTEND;
+const githubConnectionArn = process.env.GITHUB_CONNECTION_ARN;
+const githubBranch = process.env.BRANCH;
+
+if (!githubOwner || !githubRepo || !githubConnectionArn || !githubBranch) {
+  throw new Error(`Check ${environment}.env file`);
+}
+
+new FrontendStack(app, `FrontendStack-${environment}`, {
+  environment: environment,
+  githubOwner: githubOwner,
+  githubFrontendRepo: githubRepo,
+  githubConnectionArn: githubConnectionArn,
+  githubBranch: githubBranch,
   env: {
     region: "ap-northeast-2",
   },
