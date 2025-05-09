@@ -4,11 +4,14 @@ import { FrontendStack } from "../lib/frontend/frontend-stack";
 import * as dotenv from "dotenv";
 import { DomainStack } from "../lib/domain/DomainStack";
 import { VpcStack } from "../lib/network/VpcStack";
+import { RdsStack } from "../lib/storage/RdsStack";
 
 const environment = process.env.NODE_ENV ?? "dev";
 dotenv.config({ path: `env/${environment}.env` });
 
 const app = new cdk.App();
+
+const rdsUserName = process.env.RDS_USER_NAME!;
 
 const domainName = process.env.DOMAIN_NAME!;
 const accountId = process.env.ACCOUNT_ID!;
@@ -21,6 +24,13 @@ const githubBranch = process.env.BRANCH!;
 
 const vpcStack = new VpcStack(app, `VpcStack-${environment}`, {
   environment: environment,
+});
+
+const rdsStack = new RdsStack(app, `RdsStack-${environment}`, {
+  environment: environment,
+  appName: appName,
+  vpc: vpcStack.vpc,
+  rdsUserName: rdsUserName,
 });
 
 const domainStack = new DomainStack(app, "DomainStack", {
