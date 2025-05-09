@@ -1,14 +1,10 @@
 import { Stack } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import {
-  ContainerImage,
-  Ec2Service,
-  Ec2TaskDefinition,
-  Protocol,
-} from "aws-cdk-lib/aws-ecs";
+import { Ec2Service } from "aws-cdk-lib/aws-ecs";
 import { Vpc } from "aws-cdk-lib/aws-ec2";
 import { BackendSecurityGroup } from "./BackendSecurityGroup";
 import { BackendEcsInfra } from "./BackendEcsInfra";
+import { BackendEcsTask } from "./BackendEcsTask";
 
 interface BackendStackProps {
   environment: string;
@@ -28,32 +24,27 @@ export class BackendStack extends Stack {
       },
     );
 
-    const backendEcsInfra = new BackendEcsInfra(this, `BackendEcsInfra`, {
-      environment: props.environment,
-      vpc: props.vpc,
-      securityGroup: securityGroup.securityGroup,
-    });
-
-    const taskDefinition = new Ec2TaskDefinition(
+    const ecsInfra = new BackendEcsInfra(
       this,
-      `Backend-TaskDef-${props.environment}`,
+      `Backend-ECS-Infra-${props.environment}`,
+      {
+        environment: props.environment,
+        vpc: props.vpc,
+        securityGroup: securityGroup.securityGroup,
+      },
     );
 
-    taskDefinition.addContainer(`Backend-Task-Container`, {
-      image: ContainerImage.fromRegistry("amazon/amazon-ecs-sample"),
-      memoryLimitMiB: 512,
-      portMappings: [
-        {
-          containerPort: 80,
-          hostPort: 80,
-          protocol: Protocol.TCP,
-        },
-      ],
-    });
+    const ecsTask = new BackendEcsTask(
+      this,
+      `Backend-ECS-Task-${props.environment}`,
+      {
+        environment: props.environment,
+      },
+    );
 
     new Ec2Service(this, `Backend-Service-${props.environment}`, {
-      cluster: backendEcsInfra.cluster,
-      taskDefinition: taskDefinition,
+      cluster: ecsInfra.cluster,
+      taskDefinition: ecsTask.taskDefinition,
     });
   }
 }
