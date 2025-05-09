@@ -1,23 +1,14 @@
 import { Stack } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import {
-  AsgCapacityProvider,
-  Cluster,
   ContainerImage,
   Ec2Service,
   Ec2TaskDefinition,
-  EcsOptimizedImage,
   Protocol,
 } from "aws-cdk-lib/aws-ecs";
-import {
-  InstanceClass,
-  InstanceSize,
-  InstanceType,
-  SubnetType,
-  Vpc,
-} from "aws-cdk-lib/aws-ec2";
-import { AutoScalingGroup } from "aws-cdk-lib/aws-autoscaling";
+import { Vpc } from "aws-cdk-lib/aws-ec2";
 import { BackendSecurityGroup } from "./BackendSecurityGroup";
+import { BackendEcsInfra } from "./BackendEcsInfra";
 
 interface BackendStackProps {
   environment: string;
@@ -37,36 +28,11 @@ export class BackendStack extends Stack {
       },
     );
 
-    const cluster = new Cluster(
-      this,
-      `Backend-Cluster-${props.environment}`,
-      {},
-    );
-
-    const autoScalingGroup = new AutoScalingGroup(
-      this,
-      `Backend-AutoScaling-Group-${props.environment}`,
-      {
-        vpc: props.vpc,
-        vpcSubnets: props.vpc.selectSubnets({
-          subnetType: SubnetType.PUBLIC,
-        }),
-        instanceType: InstanceType.of(InstanceClass.T3, InstanceSize.MICRO),
-        machineImage: EcsOptimizedImage.amazonLinux2(),
-        minCapacity: 0,
-        maxCapacity: 1,
-        desiredCapacity: 1,
-        securityGroup: securityGroup.securityGroup,
-      },
-    );
-
-    const capacityProvider = new AsgCapacityProvider(
-      this,
-      `Backend-ASG-CapacityProvider-${props.environment}`,
-      { autoScalingGroup: autoScalingGroup },
-    );
-
-    cluster.addAsgCapacityProvider(capacityProvider);
+    const backendEcsInfra = new BackendEcsInfra(this, `BackendEcsInfra`, {
+      environment: props.environment,
+      vpc: props.vpc,
+      securityGroup: securityGroup.securityGroup,
+    });
 
     const taskDefinition = new Ec2TaskDefinition(
       this,
@@ -86,7 +52,7 @@ export class BackendStack extends Stack {
     });
 
     new Ec2Service(this, `Backend-Service-${props.environment}`, {
-      cluster: cluster,
+      cluster: backendEcsInfra.cluster,
       taskDefinition: taskDefinition,
     });
   }
