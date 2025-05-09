@@ -3,7 +3,11 @@ import { Construct } from "constructs";
 import {
   AsgCapacityProvider,
   Cluster,
+  ContainerImage,
+  Ec2Service,
+  Ec2TaskDefinition,
   EcsOptimizedImage,
+  Protocol,
 } from "aws-cdk-lib/aws-ecs";
 import {
   InstanceClass,
@@ -50,5 +54,26 @@ export class BackendStack extends Stack {
     );
 
     cluster.addAsgCapacityProvider(capacityProvider);
+
+    const taskDefinition = new Ec2TaskDefinition(
+      this,
+      `Backend-TaskDef-${props.environment}`,
+    );
+
+    taskDefinition.addContainer(`Backend-Task-Container`, {
+      image: ContainerImage.fromRegistry("amazon/amazon-ecs-sample"),
+      memoryLimitMiB: 512,
+      portMappings: [
+        {
+          containerPort: 80,
+          protocol: Protocol.TCP,
+        },
+      ],
+    });
+
+    new Ec2Service(this, `Backend-Service-${props.environment}`, {
+      cluster: cluster,
+      taskDefinition: taskDefinition,
+    });
   }
 }
