@@ -17,6 +17,7 @@ import {
   Vpc,
 } from "aws-cdk-lib/aws-ec2";
 import { AutoScalingGroup } from "aws-cdk-lib/aws-autoscaling";
+import { BackendSecurityGroup } from "./BackendSecurityGroup";
 
 interface BackendStackProps {
   environment: string;
@@ -26,6 +27,15 @@ interface BackendStackProps {
 export class BackendStack extends Stack {
   constructor(scope: Construct, id: string, props: BackendStackProps) {
     super(scope, id);
+
+    const securityGroup = new BackendSecurityGroup(
+      this,
+      `Backend-SecurityGroup-${props.environment}`,
+      {
+        environment: props.environment,
+        vpc: props.vpc,
+      },
+    );
 
     const cluster = new Cluster(
       this,
@@ -43,7 +53,10 @@ export class BackendStack extends Stack {
         }),
         instanceType: InstanceType.of(InstanceClass.T3, InstanceSize.MICRO),
         machineImage: EcsOptimizedImage.amazonLinux2(),
+        minCapacity: 0,
+        maxCapacity: 1,
         desiredCapacity: 1,
+        securityGroup: securityGroup.securityGroup,
       },
     );
 
@@ -66,6 +79,7 @@ export class BackendStack extends Stack {
       portMappings: [
         {
           containerPort: 80,
+          hostPort: 80,
           protocol: Protocol.TCP,
         },
       ],
