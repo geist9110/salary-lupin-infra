@@ -5,6 +5,7 @@ import { Vpc } from "aws-cdk-lib/aws-ec2";
 import { BackendSecurityGroup } from "./BackendSecurityGroup";
 import { BackendEcsInfra } from "./BackendEcsInfra";
 import { BackendEcsTask } from "./BackendEcsTask";
+import { BackendLoadBalancer } from "./BackendLoadBalancer";
 
 interface BackendStackProps {
   environment: string;
@@ -30,7 +31,7 @@ export class BackendStack extends Stack {
       {
         environment: props.environment,
         vpc: props.vpc,
-        securityGroup: securityGroup.securityGroup,
+        securityGroup: securityGroup.ecsSecurityGroup,
       },
     );
 
@@ -42,9 +43,20 @@ export class BackendStack extends Stack {
       },
     );
 
-    new Ec2Service(this, `Backend-Service-${props.environment}`, {
-      cluster: ecsInfra.cluster,
-      taskDefinition: ecsTask.taskDefinition,
+    const ecsService = new Ec2Service(
+      this,
+      `Backend-Service-${props.environment}`,
+      {
+        cluster: ecsInfra.cluster,
+        taskDefinition: ecsTask.taskDefinition,
+      },
+    );
+
+    new BackendLoadBalancer(this, `Backend-LoadBalancer-${props.environment}`, {
+      environment: props.environment,
+      vpc: props.vpc,
+      securityGroup: securityGroup.loadBalancerSecurityGroup,
+      target: ecsService,
     });
   }
 }
