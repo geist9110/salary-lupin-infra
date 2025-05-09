@@ -39,7 +39,7 @@ export class BackendStack extends Stack {
       {
         vpc: props.vpc,
         vpcSubnets: props.vpc.selectSubnets({
-          subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+          subnetType: SubnetType.PUBLIC,
         }),
         instanceType: InstanceType.of(InstanceClass.T3, InstanceSize.MICRO),
         machineImage: EcsOptimizedImage.amazonLinux2(),
