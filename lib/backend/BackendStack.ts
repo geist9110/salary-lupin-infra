@@ -1,11 +1,11 @@
-import { Duration, Stack } from "aws-cdk-lib";
+import { Stack } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { Ec2Service } from "aws-cdk-lib/aws-ecs";
-import { SubnetType, Vpc } from "aws-cdk-lib/aws-ec2";
+import { Vpc } from "aws-cdk-lib/aws-ec2";
 import { BackendSecurityGroup } from "./BackendSecurityGroup";
 import { BackendEcsInfra } from "./BackendEcsInfra";
 import { BackendEcsTask } from "./BackendEcsTask";
-import { ApplicationLoadBalancer } from "aws-cdk-lib/aws-elasticloadbalancingv2";
+import { BackendLoadBalancer } from "./BackendLoadBalancer";
 
 interface BackendStackProps {
   environment: string;
@@ -34,6 +34,7 @@ export class BackendStack extends Stack {
         securityGroup: securityGroup.ecsSecurityGroup,
       },
     );
+
     const ecsTask = new BackendEcsTask(
       this,
       `Backend-ECS-Task-${props.environment}`,
@@ -51,31 +52,11 @@ export class BackendStack extends Stack {
       },
     );
 
-    const lb = new ApplicationLoadBalancer(
-      this,
-      `Backend-LoadBalancer-${props.environment}`,
-      {
-        vpc: props.vpc,
-        vpcSubnets: props.vpc.selectSubnets({
-          subnetType: SubnetType.PUBLIC,
-        }),
-        securityGroup: securityGroup.loadBalancerSecurityGroup,
-        internetFacing: true,
-      },
-    );
-
-    const listener = lb.addListener(
-      `Backend-LoadBalancer-Listener-${props.environment}`,
-      { port: 80 },
-    );
-
-    listener.addTargets(`Backend-Loadbalancer-Target-${props.environment}`, {
-      port: 80,
-      targets: [ecsService],
-      healthCheck: {
-        path: "/",
-        interval: Duration.seconds(30),
-      },
+    new BackendLoadBalancer(this, `Backend-LoadBalancer-${props.environment}`, {
+      environment: props.environment,
+      vpc: props.vpc,
+      securityGroup: securityGroup.loadBalancerSecurityGroup,
+      target: ecsService,
     });
   }
 }
