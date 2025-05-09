@@ -12,7 +12,7 @@ export class VpcStack extends Stack {
   constructor(scope: Construct, id: string, props: VpcStackProps) {
     super(scope, id);
 
-    const vpc = new Vpc(this, `Salary-lupin-VPC-${props.environment}`, {
+    this.vpc = new Vpc(this, `Salary-lupin-VPC-${props.environment}`, {
       maxAzs: 2,
       natGateways: 0,
       subnetConfiguration: [
