@@ -1,6 +1,10 @@
 import { Stack } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { Cluster, EcsOptimizedImage } from "aws-cdk-lib/aws-ecs";
+import {
+  AsgCapacityProvider,
+  Cluster,
+  EcsOptimizedImage,
+} from "aws-cdk-lib/aws-ecs";
 import {
   InstanceClass,
   InstanceSize,
@@ -19,9 +23,11 @@ export class BackendStack extends Stack {
   constructor(scope: Construct, id: string, props: BackendStackProps) {
     super(scope, id);
 
-    const ecs = new Cluster(this, `Backend-Cluster-${props.environment}`, {
-      vpc: props.vpc,
-    });
+    const cluster = new Cluster(
+      this,
+      `Backend-Cluster-${props.environment}`,
+      {},
+    );
 
     const autoScalingGroup = new AutoScalingGroup(
       this,
@@ -36,5 +42,13 @@ export class BackendStack extends Stack {
         desiredCapacity: 1,
       },
     );
+
+    const capacityProvider = new AsgCapacityProvider(
+      this,
+      `Backend-ASG-CapacityProvider-${props.environment}`,
+      { autoScalingGroup: autoScalingGroup },
+    );
+
+    cluster.addAsgCapacityProvider(capacityProvider);
   }
 }
