@@ -5,6 +5,7 @@ import * as dotenv from "dotenv";
 import { DomainStack } from "../lib/domain/DomainStack";
 import { VpcStack } from "../lib/network/VpcStack";
 import { RdsStack } from "../lib/storage/RdsStack";
+import { BackendStack } from "../lib/backend/BackendStack";
 
 const environment = process.env.NODE_ENV ?? "dev";
 dotenv.config({ path: `env/${environment}.env` });
@@ -31,6 +32,11 @@ const rdsStack = new RdsStack(app, `RdsStack-${environment}`, {
   appName: appName,
   vpc: vpcStack.vpc,
   rdsUserName: rdsUserName,
+});
+
+const backendStack = new BackendStack(app, `BackendStack-${environment}`, {
+  environment: environment,
+  vpc: vpcStack.vpc,
 });
 
 const domainStack = new DomainStack(app, "DomainStack", {
