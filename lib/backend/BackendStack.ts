@@ -1,4 +1,4 @@
-import { Stack } from "aws-cdk-lib";
+import { Stack, StackProps } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { Ec2Service } from "aws-cdk-lib/aws-ecs";
 import { Vpc } from "aws-cdk-lib/aws-ec2";
@@ -6,15 +6,20 @@ import { BackendSecurityGroup } from "./BackendSecurityGroup";
 import { BackendEcsInfra } from "./BackendEcsInfra";
 import { BackendEcsTask } from "./BackendEcsTask";
 import { BackendLoadBalancer } from "./BackendLoadBalancer";
+import { ARecord, IHostedZone, RecordTarget } from "aws-cdk-lib/aws-route53";
+import { LoadBalancerTarget } from "aws-cdk-lib/aws-route53-targets";
+import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
 
-interface BackendStackProps {
+interface BackendStackProps extends StackProps {
   environment: string;
   vpc: Vpc;
+  certificate: Certificate;
+  hostedZone: IHostedZone;
 }
 
 export class BackendStack extends Stack {
   constructor(scope: Construct, id: string, props: BackendStackProps) {
-    super(scope, id);
+    super(scope, id, props);
 
     const securityGroup = new BackendSecurityGroup(
       this,
@@ -52,11 +57,24 @@ export class BackendStack extends Stack {
       },
     );
 
-    new BackendLoadBalancer(this, `Backend-LoadBalancer-${props.environment}`, {
-      environment: props.environment,
-      vpc: props.vpc,
-      securityGroup: securityGroup.loadBalancerSecurityGroup,
-      target: ecsService,
+    const loadBalancer = new BackendLoadBalancer(
+      this,
+      `Backend-LoadBalancer-${props.environment}`,
+      {
+        environment: props.environment,
+        vpc: props.vpc,
+        securityGroup: securityGroup.loadBalancerSecurityGroup,
+        target: ecsService,
+        certificate: props.certificate,
+      },
+    );
+
+    new ARecord(this, `Backend-record-${props.environment}`, {
+      zone: props.hostedZone,
+      recordName: `api${props.environment == "prod" ? "" : "." + props.environment}`,
+      target: RecordTarget.fromAlias(
+        new LoadBalancerTarget(loadBalancer.applicationLoadBalancer),
+      ),
     });
   }
 }

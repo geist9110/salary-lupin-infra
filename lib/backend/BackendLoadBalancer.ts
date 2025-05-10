@@ -1,23 +1,32 @@
-import { Duration, Stack } from "aws-cdk-lib";
+import { Duration } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { ApplicationLoadBalancer } from "aws-cdk-lib/aws-elasticloadbalancingv2";
+import {
+  ApplicationLoadBalancer,
+  ApplicationProtocol,
+  ApplicationTargetGroup,
+  TargetType,
+} from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import { SecurityGroup, SubnetType, Vpc } from "aws-cdk-lib/aws-ec2";
 import { Ec2Service } from "aws-cdk-lib/aws-ecs";
+import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
 
 interface BackendLoadBalancerProps {
   environment: string;
   vpc: Vpc;
   securityGroup: SecurityGroup;
   target: Ec2Service;
+  certificate: Certificate;
 }
 
-export class BackendLoadBalancer extends Stack {
+export class BackendLoadBalancer extends Construct {
+  public readonly applicationLoadBalancer: ApplicationLoadBalancer;
+
   constructor(scope: Construct, id: string, props: BackendLoadBalancerProps) {
     super(scope, id);
 
-    const lb = new ApplicationLoadBalancer(
+    this.applicationLoadBalancer = new ApplicationLoadBalancer(
       this,
-      `Backend-ApplicationLoadBalancer-${props.environment}`,
+      `Backend-ALB-${props.environment}`,
       {
         vpc: props.vpc,
         vpcSubnets: props.vpc.selectSubnets({
@@ -28,15 +37,24 @@ export class BackendLoadBalancer extends Stack {
       },
     );
 
-    const listener = lb.addListener(
-      `Backend-ApplicationLoadBalancer-Listener-${props.environment}`,
+    const httpListener = this.applicationLoadBalancer.addListener(
+      `Backend-ALB-Listener-${props.environment}`,
       { port: 80 },
     );
 
-    listener.addTargets(
-      `Backend-ApplicationLoadBalancer-Target-${props.environment}`,
+    const httpsListener = this.applicationLoadBalancer.addListener(
+      `Backend-ALB-https-listener-${props.environment}`,
+      { port: 443, certificates: [props.certificate] },
+    );
+
+    const targetGroup = new ApplicationTargetGroup(
+      this,
+      `Backend-ALB-TargetGroups-${props.environment}`,
       {
+        vpc: props.vpc,
         port: 80,
+        protocol: ApplicationProtocol.HTTP,
+        targetType: TargetType.INSTANCE,
         targets: [props.target],
         healthCheck: {
           path: "/",
@@ -44,5 +62,13 @@ export class BackendLoadBalancer extends Stack {
         },
       },
     );
+
+    httpListener.addTargetGroups(`Add-Backend-TG-Http-${props.environment}`, {
+      targetGroups: [targetGroup],
+    });
+
+    httpsListener.addTargetGroups(`Add-Backend-TG-Https-${props.environment}`, {
+      targetGroups: [targetGroup],
+    });
   }
 }
