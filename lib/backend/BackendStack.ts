@@ -8,11 +8,13 @@ import { BackendEcsTask } from "./BackendEcsTask";
 import { BackendLoadBalancer } from "./BackendLoadBalancer";
 import { ARecord, HostedZone, RecordTarget } from "aws-cdk-lib/aws-route53";
 import { LoadBalancerTarget } from "aws-cdk-lib/aws-route53-targets";
+import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
 
 interface BackendStackProps extends StackProps {
   environment: string;
   vpc: Vpc;
   domainName: string;
+  certificate: Certificate;
 }
 
 export class BackendStack extends Stack {
@@ -63,6 +65,7 @@ export class BackendStack extends Stack {
         vpc: props.vpc,
         securityGroup: securityGroup.loadBalancerSecurityGroup,
         target: ecsService,
+        certificate: props.certificate,
       },
     );
 

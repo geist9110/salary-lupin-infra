@@ -9,13 +9,13 @@ import {
 import { SecurityGroup, SubnetType, Vpc } from "aws-cdk-lib/aws-ec2";
 import { Ec2Service } from "aws-cdk-lib/aws-ecs";
 import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
-import { StringParameter } from "aws-cdk-lib/aws-ssm";
 
 interface BackendLoadBalancerProps {
   environment: string;
   vpc: Vpc;
   securityGroup: SecurityGroup;
   target: Ec2Service;
+  certificate: Certificate;
 }
 
 export class BackendLoadBalancer extends Construct {
@@ -23,17 +23,6 @@ export class BackendLoadBalancer extends Construct {
 
   constructor(scope: Construct, id: string, props: BackendLoadBalancerProps) {
     super(scope, id);
-
-    const certArn = StringParameter.valueForStringParameter(
-      this,
-      `/infra/${props.environment}/alb-certificate-arn`,
-    );
-
-    const albCertificate = Certificate.fromCertificateArn(
-      this,
-      `Backend-ALB-Certificate-${props.environment}`,
-      certArn,
-    );
 
     this.applicationLoadBalancer = new ApplicationLoadBalancer(
       this,
@@ -55,7 +44,7 @@ export class BackendLoadBalancer extends Construct {
 
     const httpsListener = this.applicationLoadBalancer.addListener(
       `Backend-ALB-https-listener-${props.environment}`,
-      { port: 443, certificates: [albCertificate] },
+      { port: 443, certificates: [props.certificate] },
     );
 
     const targetGroup = new ApplicationTargetGroup(
