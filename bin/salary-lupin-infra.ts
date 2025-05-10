@@ -6,6 +6,7 @@ import { DomainStack } from "../lib/domain/DomainStack";
 import { VpcStack } from "../lib/network/VpcStack";
 import { RdsStack } from "../lib/storage/RdsStack";
 import { BackendStack } from "../lib/backend/BackendStack";
+import { BackendCertificateStack } from "../lib/cert/BackendCertificateStack";
 
 const environment = process.env.NODE_ENV ?? "dev";
 dotenv.config({ path: `env/${environment}.env` });
@@ -26,6 +27,19 @@ const githubBranch = process.env.BRANCH!;
 const vpcStack = new VpcStack(app, `VpcStack-${environment}`, {
   environment: environment,
 });
+
+const backendCertificateStack = new BackendCertificateStack(
+  app,
+  `BackendCertificateStack-${environment}`,
+  {
+    environment: environment,
+    domainName: domainName,
+    env: {
+      account: accountId,
+      region: "ap-northeast-2",
+    },
+  },
+);
 
 const rdsStack = new RdsStack(app, `RdsStack-${environment}`, {
   environment: environment,
