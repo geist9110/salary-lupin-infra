@@ -5,6 +5,7 @@ import {
   CertificateValidation,
 } from "aws-cdk-lib/aws-certificatemanager";
 import * as route53 from "aws-cdk-lib/aws-route53";
+import { IHostedZone } from "aws-cdk-lib/aws-route53";
 
 interface BackendCertificateStackProps extends StackProps {
   environment: string;
@@ -13,6 +14,7 @@ interface BackendCertificateStackProps extends StackProps {
 
 export class BackendCertificateStack extends Stack {
   public readonly albCertificate: Certificate;
+  public readonly hostedZone: IHostedZone;
 
   constructor(
     scope: Construct,
@@ -21,7 +23,7 @@ export class BackendCertificateStack extends Stack {
   ) {
     super(scope, id, props);
 
-    const hostedZone = route53.HostedZone.fromLookup(this, "HostedZone", {
+    this.hostedZone = route53.HostedZone.fromLookup(this, "HostedZone", {
       domainName: props.domainName,
     });
 
@@ -30,7 +32,7 @@ export class BackendCertificateStack extends Stack {
       `BackendCertificate-${props.environment}`,
       {
         domainName: `api.${props.environment == "prod" ? "" : props.environment + "."}${props.domainName}`,
-        validation: CertificateValidation.fromDns(hostedZone),
+        validation: CertificateValidation.fromDns(this.hostedZone),
       },
     );
   }

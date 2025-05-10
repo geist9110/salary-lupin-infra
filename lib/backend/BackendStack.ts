@@ -6,15 +6,15 @@ import { BackendSecurityGroup } from "./BackendSecurityGroup";
 import { BackendEcsInfra } from "./BackendEcsInfra";
 import { BackendEcsTask } from "./BackendEcsTask";
 import { BackendLoadBalancer } from "./BackendLoadBalancer";
-import { ARecord, HostedZone, RecordTarget } from "aws-cdk-lib/aws-route53";
+import { ARecord, IHostedZone, RecordTarget } from "aws-cdk-lib/aws-route53";
 import { LoadBalancerTarget } from "aws-cdk-lib/aws-route53-targets";
 import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
 
 interface BackendStackProps extends StackProps {
   environment: string;
   vpc: Vpc;
-  domainName: string;
   certificate: Certificate;
+  hostedZone: IHostedZone;
 }
 
 export class BackendStack extends Stack {
@@ -69,16 +69,8 @@ export class BackendStack extends Stack {
       },
     );
 
-    const hostedZone = HostedZone.fromLookup(
-      this,
-      `HostedZone-${props.environment}`,
-      {
-        domainName: props.domainName,
-      },
-    );
-
     new ARecord(this, `Backend-record-${props.environment}`, {
-      zone: hostedZone,
+      zone: props.hostedZone,
       recordName: `api${props.environment == "prod" ? "" : "." + props.environment}`,
       target: RecordTarget.fromAlias(
         new LoadBalancerTarget(loadBalancer.applicationLoadBalancer),

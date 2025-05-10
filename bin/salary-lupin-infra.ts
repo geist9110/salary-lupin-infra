@@ -59,8 +59,8 @@ const rdsStack = new RdsStack(app, `RdsStack-${environment}`, {
 const backendStack = new BackendStack(app, `BackendStack-${environment}`, {
   environment: environment,
   vpc: vpcStack.vpc,
-  domainName: domainName,
   certificate: backendCertificateStack.albCertificate,
+  hostedZone: backendCertificateStack.hostedZone,
   env: {
     account: accountId,
     region: "ap-northeast-2",
