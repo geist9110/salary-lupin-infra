@@ -35,6 +35,18 @@ export class BackendSecurityGroup extends Construct {
       "Allow HTTP IPv6",
     );
 
+    this.loadBalancerSecurityGroup.addIngressRule(
+      Peer.anyIpv4(),
+      Port.tcp(443),
+      "Allow HTTPS IPv4",
+    );
+
+    this.loadBalancerSecurityGroup.addIngressRule(
+      Peer.anyIpv6(),
+      Port.tcp(443),
+      "Allow HTTPS IPv6",
+    );
+
     this.ecsSecurityGroup = new SecurityGroup(
       this,
       `Backend-ECS-SecurityGroup-${props.environment}`,

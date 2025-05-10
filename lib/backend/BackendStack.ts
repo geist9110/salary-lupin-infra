@@ -1,4 +1,4 @@
-import { Stack } from "aws-cdk-lib";
+import { Stack, StackProps } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { Ec2Service } from "aws-cdk-lib/aws-ecs";
 import { Vpc } from "aws-cdk-lib/aws-ec2";
@@ -7,7 +7,7 @@ import { BackendEcsInfra } from "./BackendEcsInfra";
 import { BackendEcsTask } from "./BackendEcsTask";
 import { BackendLoadBalancer } from "./BackendLoadBalancer";
 
-interface BackendStackProps {
+interface BackendStackProps extends StackProps {
   environment: string;
   vpc: Vpc;
 }

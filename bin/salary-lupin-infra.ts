@@ -51,7 +51,12 @@ const rdsStack = new RdsStack(app, `RdsStack-${environment}`, {
 const backendStack = new BackendStack(app, `BackendStack-${environment}`, {
   environment: environment,
   vpc: vpcStack.vpc,
+  env: {
+    account: accountId,
+    region: "ap-northeast-2",
+  },
 });
+backendStack.addDependency(backendCertificateStack);
 
 const domainStack = new DomainStack(app, "DomainStack", {
   environment: environment,

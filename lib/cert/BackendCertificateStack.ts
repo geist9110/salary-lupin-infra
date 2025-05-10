@@ -5,6 +5,7 @@ import {
   CertificateValidation,
 } from "aws-cdk-lib/aws-certificatemanager";
 import * as route53 from "aws-cdk-lib/aws-route53";
+import { StringParameter } from "aws-cdk-lib/aws-ssm";
 
 interface BackendCertificateStackProps extends StackProps {
   environment: string;
@@ -12,8 +13,6 @@ interface BackendCertificateStackProps extends StackProps {
 }
 
 export class BackendCertificateStack extends Stack {
-  public readonly albCertificate: Certificate;
-
   constructor(
     scope: Construct,
     id: string,
@@ -25,7 +24,7 @@ export class BackendCertificateStack extends Stack {
       domainName: props.domainName,
     });
 
-    this.albCertificate = new Certificate(
+    const albCertificate = new Certificate(
       this,
       `BackendCertificate-${props.environment}`,
       {
@@ -33,5 +32,10 @@ export class BackendCertificateStack extends Stack {
         validation: CertificateValidation.fromDns(hostedZone),
       },
     );
+
+    new StringParameter(this, `BackendAlbCertificateArn-${props.environment}`, {
+      parameterName: `/infra/${props.environment}/alb-certificate-arn`,
+      stringValue: albCertificate.certificateArn,
+    });
   }
 }
