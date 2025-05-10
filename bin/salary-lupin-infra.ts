@@ -7,6 +7,7 @@ import { VpcStack } from "../lib/network/VpcStack";
 import { RdsStack } from "../lib/storage/RdsStack";
 import { BackendStack } from "../lib/backend/BackendStack";
 import { BackendCertificateStack } from "../lib/cert/BackendCertificateStack";
+import { EcrStack } from "../lib/storage/EcrStack";
 
 const environment = process.env.NODE_ENV ?? "dev";
 dotenv.config({ path: `env/${environment}.env` });
@@ -25,6 +26,14 @@ const githubConnectionArn = process.env.GITHUB_CONNECTION_ARN!;
 const githubBranch = process.env.BRANCH!;
 
 const vpcStack = new VpcStack(app, `VpcStack-${environment}`, {
+  environment: environment,
+  env: {
+    account: accountId,
+    region: "ap-northeast-2",
+  },
+});
+
+const ecrStack = new EcrStack(app, `EcrStack-${environment}`, {
   environment: environment,
   env: {
     account: accountId,
