@@ -6,15 +6,18 @@ import { BackendSecurityGroup } from "./BackendSecurityGroup";
 import { BackendEcsInfra } from "./BackendEcsInfra";
 import { BackendEcsTask } from "./BackendEcsTask";
 import { BackendLoadBalancer } from "./BackendLoadBalancer";
+import { ARecord, HostedZone, RecordTarget } from "aws-cdk-lib/aws-route53";
+import { LoadBalancerTarget } from "aws-cdk-lib/aws-route53-targets";
 
 interface BackendStackProps extends StackProps {
   environment: string;
   vpc: Vpc;
+  domainName: string;
 }
 
 export class BackendStack extends Stack {
   constructor(scope: Construct, id: string, props: BackendStackProps) {
-    super(scope, id);
+    super(scope, id, props);
 
     const securityGroup = new BackendSecurityGroup(
       this,
@@ -52,11 +55,31 @@ export class BackendStack extends Stack {
       },
     );
 
-    new BackendLoadBalancer(this, `Backend-LoadBalancer-${props.environment}`, {
-      environment: props.environment,
-      vpc: props.vpc,
-      securityGroup: securityGroup.loadBalancerSecurityGroup,
-      target: ecsService,
+    const loadBalancer = new BackendLoadBalancer(
+      this,
+      `Backend-LoadBalancer-${props.environment}`,
+      {
+        environment: props.environment,
+        vpc: props.vpc,
+        securityGroup: securityGroup.loadBalancerSecurityGroup,
+        target: ecsService,
+      },
+    );
+
+    const hostedZone = HostedZone.fromLookup(
+      this,
+      `HostedZone-${props.environment}`,
+      {
+        domainName: props.domainName,
+      },
+    );
+
+    new ARecord(this, `Backend-record-${props.environment}`, {
+      zone: hostedZone,
+      recordName: `api${props.environment == "prod" ? "" : "." + props.environment}`,
+      target: RecordTarget.fromAlias(
+        new LoadBalancerTarget(loadBalancer.applicationLoadBalancer),
+      ),
     });
   }
 }

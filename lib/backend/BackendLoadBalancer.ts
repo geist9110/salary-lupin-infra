@@ -19,6 +19,8 @@ interface BackendLoadBalancerProps {
 }
 
 export class BackendLoadBalancer extends Construct {
+  public readonly applicationLoadBalancer: ApplicationLoadBalancer;
+
   constructor(scope: Construct, id: string, props: BackendLoadBalancerProps) {
     super(scope, id);
 
@@ -33,7 +35,7 @@ export class BackendLoadBalancer extends Construct {
       certArn,
     );
 
-    const lb = new ApplicationLoadBalancer(
+    this.applicationLoadBalancer = new ApplicationLoadBalancer(
       this,
       `Backend-ALB-${props.environment}`,
       {
@@ -46,12 +48,12 @@ export class BackendLoadBalancer extends Construct {
       },
     );
 
-    const httpListener = lb.addListener(
+    const httpListener = this.applicationLoadBalancer.addListener(
       `Backend-ALB-Listener-${props.environment}`,
       { port: 80 },
     );
 
-    const httpsListener = lb.addListener(
+    const httpsListener = this.applicationLoadBalancer.addListener(
       `Backend-ALB-https-listener-${props.environment}`,
       { port: 443, certificates: [albCertificate] },
     );

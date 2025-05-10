@@ -26,6 +26,10 @@ const githubBranch = process.env.BRANCH!;
 
 const vpcStack = new VpcStack(app, `VpcStack-${environment}`, {
   environment: environment,
+  env: {
+    account: accountId,
+    region: "ap-northeast-2",
+  },
 });
 
 const backendCertificateStack = new BackendCertificateStack(
@@ -46,11 +50,16 @@ const rdsStack = new RdsStack(app, `RdsStack-${environment}`, {
   appName: appName,
   vpc: vpcStack.vpc,
   rdsUserName: rdsUserName,
+  env: {
+    account: accountId,
+    region: "ap-northeast-2",
+  },
 });
 
 const backendStack = new BackendStack(app, `BackendStack-${environment}`, {
   environment: environment,
   vpc: vpcStack.vpc,
+  domainName: domainName,
   env: {
     account: accountId,
     region: "ap-northeast-2",

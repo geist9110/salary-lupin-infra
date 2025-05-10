@@ -1,4 +1,4 @@
-import { RemovalPolicy, Stack } from "aws-cdk-lib";
+import { RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import {
   Credentials,
@@ -14,7 +14,7 @@ import {
   Vpc,
 } from "aws-cdk-lib/aws-ec2";
 
-interface RdsStackProps {
+interface RdsStackProps extends StackProps {
   environment: string;
   appName: string;
   vpc: Vpc;
@@ -25,7 +25,7 @@ export class RdsStack extends Stack {
   public readonly DB: DatabaseInstance;
 
   constructor(scope: Construct, id: string, props: RdsStackProps) {
-    super(scope, id);
+    super(scope, id, props);
 
     this.DB = new DatabaseInstance(
       this,
