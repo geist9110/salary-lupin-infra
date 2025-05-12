@@ -13,7 +13,7 @@ import { ARecord, IHostedZone, RecordTarget } from "aws-cdk-lib/aws-route53";
 import { LoadBalancerTarget } from "aws-cdk-lib/aws-route53-targets";
 import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
 import { Bucket } from "aws-cdk-lib/aws-s3";
-import { Artifact } from "aws-cdk-lib/aws-codepipeline";
+import { Artifact, Pipeline } from "aws-cdk-lib/aws-codepipeline";
 import {
   BuildEnvironmentVariableType,
   BuildSpec,
@@ -21,6 +21,10 @@ import {
   PipelineProject,
 } from "aws-cdk-lib/aws-codebuild";
 import { ISecret } from "aws-cdk-lib/aws-secretsmanager";
+import {
+  CodeBuildAction,
+  CodeStarConnectionsSourceAction,
+} from "aws-cdk-lib/aws-codepipeline-actions";
 
 interface BackendStackProps extends StackProps {
   environment: string;
@@ -31,6 +35,10 @@ interface BackendStackProps extends StackProps {
   rdsSecret: ISecret;
   rdsUrl: string;
   rdsPort: string;
+  githubOwner: string;
+  githubRepo: string;
+  githubBranch: string;
+  githubConnectionArn: string;
 }
 
 export class BackendStack extends Stack {
@@ -117,6 +125,39 @@ export class BackendStack extends Stack {
       },
     );
 
+    const pipeline = new Pipeline(
+      this,
+      `BackendPipeline-${props.environment}`,
+      {
+        artifactBucket: artifactBucket,
+        pipelineName: `Backend-Pipeline-${props.environment}`,
+      },
+    );
 
+    pipeline.addStage({
+      stageName: "Source",
+      actions: [
+        new CodeStarConnectionsSourceAction({
+          actionName: "Github_Source",
+          owner: props.githubOwner,
+          repo: props.githubRepo,
+          branch: props.githubBranch,
+          connectionArn: props.githubConnectionArn,
+          output: sourceOutput,
+        }),
+      ],
+    });
+
+    pipeline.addStage({
+      stageName: "Build",
+      actions: [
+        new CodeBuildAction({
+          actionName: "CodeBuild",
+          project: project,
+          input: sourceOutput,
+          outputs: [buildOutput],
+        }),
+      ],
+    });
   }
 }

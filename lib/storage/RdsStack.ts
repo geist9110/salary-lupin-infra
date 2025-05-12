@@ -13,6 +13,7 @@ import {
   SubnetType,
   Vpc,
 } from "aws-cdk-lib/aws-ec2";
+import { ISecret } from "aws-cdk-lib/aws-secretsmanager";
 
 interface RdsStackProps extends StackProps {
   environment: string;
@@ -22,12 +23,14 @@ interface RdsStackProps extends StackProps {
 }
 
 export class RdsStack extends Stack {
-  public readonly DB: DatabaseInstance;
+  public readonly dbSecret: ISecret;
+  public readonly dbUrl: string;
+  public readonly dbPort: string;
 
   constructor(scope: Construct, id: string, props: RdsStackProps) {
     super(scope, id, props);
 
-    this.DB = new DatabaseInstance(
+    const DB = new DatabaseInstance(
       this,
       `${props.appName}-Backend-DB-${props.environment}`,
       {
@@ -48,5 +51,9 @@ export class RdsStack extends Stack {
         deletionProtection: false,
       },
     );
+
+    this.dbSecret = DB.secret!;
+    this.dbUrl = DB.dbInstanceEndpointAddress;
+    this.dbPort = DB.dbInstanceEndpointPort;
   }
 }
