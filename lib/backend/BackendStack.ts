@@ -1,10 +1,13 @@
 import { Stack, StackProps } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { Ec2Service } from "aws-cdk-lib/aws-ecs";
-import { Vpc } from "aws-cdk-lib/aws-ec2";
+import {
+  Instance,
+  InstanceType,
+  MachineImage,
+  SubnetType,
+  Vpc,
+} from "aws-cdk-lib/aws-ec2";
 import { BackendSecurityGroup } from "./BackendSecurityGroup";
-import { BackendEcsInfra } from "./BackendEcsInfra";
-import { BackendEcsTask } from "./BackendEcsTask";
 import { BackendLoadBalancer } from "./BackendLoadBalancer";
 import { ARecord, IHostedZone, RecordTarget } from "aws-cdk-lib/aws-route53";
 import { LoadBalancerTarget } from "aws-cdk-lib/aws-route53-targets";
@@ -30,30 +33,17 @@ export class BackendStack extends Stack {
       },
     );
 
-    const ecsInfra = new BackendEcsInfra(
+    const ec2Instance = new Instance(
       this,
-      `Backend-ECS-Infra-${props.environment}`,
+      `BackendInstance-${props.environment}`,
       {
-        environment: props.environment,
         vpc: props.vpc,
-        securityGroup: securityGroup.ecsSecurityGroup,
-      },
-    );
-
-    const ecsTask = new BackendEcsTask(
-      this,
-      `Backend-ECS-Task-${props.environment}`,
-      {
-        environment: props.environment,
-      },
-    );
-
-    const ecsService = new Ec2Service(
-      this,
-      `Backend-Service-${props.environment}`,
-      {
-        cluster: ecsInfra.cluster,
-        taskDefinition: ecsTask.taskDefinition,
+        instanceType: new InstanceType("t3.micro"),
+        machineImage: MachineImage.latestAmazonLinux2(),
+        securityGroup: securityGroup.ec2SecurityGroup,
+        vpcSubnets: {
+          subnetType: SubnetType.PUBLIC,
+        },
       },
     );
 
@@ -64,7 +54,7 @@ export class BackendStack extends Stack {
         environment: props.environment,
         vpc: props.vpc,
         securityGroup: securityGroup.loadBalancerSecurityGroup,
-        target: ecsService,
+        target: ec2Instance,
         certificate: props.certificate,
       },
     );

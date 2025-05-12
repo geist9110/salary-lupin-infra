@@ -6,15 +6,15 @@ import {
   ApplicationTargetGroup,
   TargetType,
 } from "aws-cdk-lib/aws-elasticloadbalancingv2";
-import { SecurityGroup, SubnetType, Vpc } from "aws-cdk-lib/aws-ec2";
-import { Ec2Service } from "aws-cdk-lib/aws-ecs";
+import { Instance, SecurityGroup, SubnetType, Vpc } from "aws-cdk-lib/aws-ec2";
 import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
+import { InstanceTarget } from "aws-cdk-lib/aws-elasticloadbalancingv2-targets";
 
 interface BackendLoadBalancerProps {
   environment: string;
   vpc: Vpc;
   securityGroup: SecurityGroup;
-  target: Ec2Service;
+  target: Instance;
   certificate: Certificate;
 }
 
@@ -55,7 +55,7 @@ export class BackendLoadBalancer extends Construct {
         port: 80,
         protocol: ApplicationProtocol.HTTP,
         targetType: TargetType.INSTANCE,
-        targets: [props.target],
+        targets: [new InstanceTarget(props.target, 80)],
         healthCheck: {
           path: "/",
           interval: Duration.seconds(30),
