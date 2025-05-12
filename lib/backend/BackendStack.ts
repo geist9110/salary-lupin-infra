@@ -1,4 +1,4 @@
-import { Stack, StackProps } from "aws-cdk-lib";
+import { RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import {
   Instance,
@@ -12,12 +12,25 @@ import { BackendLoadBalancer } from "./BackendLoadBalancer";
 import { ARecord, IHostedZone, RecordTarget } from "aws-cdk-lib/aws-route53";
 import { LoadBalancerTarget } from "aws-cdk-lib/aws-route53-targets";
 import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
+import { Bucket } from "aws-cdk-lib/aws-s3";
+import { Artifact } from "aws-cdk-lib/aws-codepipeline";
+import {
+  BuildEnvironmentVariableType,
+  BuildSpec,
+  LinuxBuildImage,
+  PipelineProject,
+} from "aws-cdk-lib/aws-codebuild";
+import { ISecret } from "aws-cdk-lib/aws-secretsmanager";
 
 interface BackendStackProps extends StackProps {
   environment: string;
+  appName: string;
   vpc: Vpc;
   certificate: Certificate;
   hostedZone: IHostedZone;
+  rdsSecret: ISecret;
+  rdsUrl: string;
+  rdsPort: string;
 }
 
 export class BackendStack extends Stack {
@@ -66,5 +79,44 @@ export class BackendStack extends Stack {
         new LoadBalancerTarget(loadBalancer.applicationLoadBalancer),
       ),
     });
+
+    const artifactBucket = new Bucket(
+      this,
+      `Backend-ArtifactBucket-${props.environment}`,
+      {
+        removalPolicy: RemovalPolicy.DESTROY,
+        autoDeleteObjects: true,
+      },
+    );
+
+    const sourceOutput = new Artifact();
+    const buildOutput = new Artifact();
+
+    const project = new PipelineProject(
+      this,
+      `BackendBuildProject-${props.environment}`,
+      {
+        buildSpec: BuildSpec.fromSourceFilename("buildspec.yml"),
+        environment: {
+          buildImage: LinuxBuildImage.STANDARD_7_0,
+        },
+        environmentVariables: {
+          RDS_USERNAME: {
+            value: `${props.rdsSecret.secretArn}:username`,
+            type: BuildEnvironmentVariableType.SECRETS_MANAGER,
+          },
+          RDS_PASSWORD: {
+            value: `${props.rdsSecret.secretArn}:password`,
+            type: BuildEnvironmentVariableType.SECRETS_MANAGER,
+          },
+          RDS_URL: {
+            value: `jdbc:mysql://${props.rdsUrl}:${props.rdsPort}/${props.appName}`,
+            type: BuildEnvironmentVariableType.PLAINTEXT,
+          },
+        },
+      },
+    );
+
+
   }
 }
