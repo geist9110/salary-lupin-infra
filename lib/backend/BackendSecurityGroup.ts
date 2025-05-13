@@ -59,7 +59,7 @@ export class BackendSecurityGroup extends Construct {
 
     this.ec2SecurityGroup.addIngressRule(
       this.loadBalancerSecurityGroup,
-      Port.tcp(80),
+      Port.tcp(8080),
       "Allow HTTP from Loadbalancer",
     );
   }

@@ -1,7 +1,8 @@
-import { RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
+import { RemovalPolicy, Stack, StackProps, Tags } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import {
-  Instance,
+  InstanceClass,
+  InstanceSize,
   InstanceType,
   MachineImage,
   SubnetType,
@@ -23,8 +24,21 @@ import {
 import { ISecret } from "aws-cdk-lib/aws-secretsmanager";
 import {
   CodeBuildAction,
+  CodeDeployServerDeployAction,
   CodeStarConnectionsSourceAction,
 } from "aws-cdk-lib/aws-codepipeline-actions";
+import {
+  ServerApplication,
+  ServerDeploymentConfig,
+  ServerDeploymentGroup,
+} from "aws-cdk-lib/aws-codedeploy";
+import { AutoScalingGroup } from "aws-cdk-lib/aws-autoscaling";
+import {
+  ManagedPolicy,
+  PolicyStatement,
+  Role,
+  ServicePrincipal,
+} from "aws-cdk-lib/aws-iam";
 
 interface BackendStackProps extends StackProps {
   environment: string;
@@ -54,19 +68,49 @@ export class BackendStack extends Stack {
       },
     );
 
-    const ec2Instance = new Instance(
+    const instanceRole = new Role(
       this,
-      `BackendInstance-${props.environment}`,
+      `BackendInstanceRole-${props.environment}`,
       {
-        vpc: props.vpc,
-        instanceType: new InstanceType("t3.micro"),
-        machineImage: MachineImage.latestAmazonLinux2(),
-        securityGroup: securityGroup.ec2SecurityGroup,
-        vpcSubnets: {
-          subnetType: SubnetType.PUBLIC,
-        },
+        assumedBy: new ServicePrincipal("ec2.amazonaws.com"),
+        description: "Role for EC2 instances in the backend ASG",
       },
     );
+
+    instanceRole.addManagedPolicy(
+      ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore"),
+    );
+
+    instanceRole.addToPolicy(
+      new PolicyStatement({
+        actions: [
+          "ssm:GetParameter",
+          "secretsmanager:GetSecretValue",
+          "ec2:DescribeTags",
+        ],
+        resources: ["*"],
+      }),
+    );
+
+    const autoScalingGroup = new AutoScalingGroup(
+      this,
+      `Backend-ASG-${props.environment}`,
+      {
+        vpc: props.vpc,
+        instanceType: InstanceType.of(InstanceClass.T3, InstanceSize.MICRO),
+        machineImage: MachineImage.latestAmazonLinux2023(),
+        minCapacity: 0,
+        maxCapacity: 2,
+        desiredCapacity: 1,
+        vpcSubnets: { subnetType: SubnetType.PUBLIC },
+        securityGroup: securityGroup.ec2SecurityGroup,
+        role: instanceRole,
+      },
+    );
+
+    Tags.of(autoScalingGroup).add("env", props.environment, {
+      applyToLaunchedInstances: true,
+    });
 
     const loadBalancer = new BackendLoadBalancer(
       this,
@@ -75,10 +119,11 @@ export class BackendStack extends Stack {
         environment: props.environment,
         vpc: props.vpc,
         securityGroup: securityGroup.loadBalancerSecurityGroup,
-        target: ec2Instance,
         certificate: props.certificate,
       },
     );
+
+    autoScalingGroup.attachToApplicationTargetGroup(loadBalancer.targetGroup);
 
     new ARecord(this, `Backend-record-${props.environment}`, {
       zone: props.hostedZone,
@@ -156,6 +201,32 @@ export class BackendStack extends Stack {
           project: project,
           input: sourceOutput,
           outputs: [buildOutput],
+        }),
+      ],
+    });
+
+    const deploymentGroup = new ServerDeploymentGroup(
+      this,
+      `BackendDeploymentGroup-${props.environment}`,
+      {
+        application: new ServerApplication(
+          this,
+          `BackendCodeDeployApp-${props.environment}`,
+        ),
+        autoScalingGroups: [autoScalingGroup],
+        deploymentGroupName: `Backend-Deployment-Group-${props.environment}`,
+        installAgent: true,
+        deploymentConfig: ServerDeploymentConfig.ALL_AT_ONCE,
+      },
+    );
+
+    pipeline.addStage({
+      stageName: "Deploy",
+      actions: [
+        new CodeDeployServerDeployAction({
+          actionName: "DeployToEC2",
+          input: buildOutput,
+          deploymentGroup,
         }),
       ],
     });

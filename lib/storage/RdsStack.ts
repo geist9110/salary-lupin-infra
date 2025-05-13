@@ -10,10 +10,14 @@ import {
   InstanceClass,
   InstanceSize,
   InstanceType,
+  Peer,
+  Port,
+  SecurityGroup,
   SubnetType,
   Vpc,
 } from "aws-cdk-lib/aws-ec2";
 import { ISecret } from "aws-cdk-lib/aws-secretsmanager";
+import { StringParameter } from "aws-cdk-lib/aws-ssm";
 
 interface RdsStackProps extends StackProps {
   environment: string;
@@ -29,6 +33,20 @@ export class RdsStack extends Stack {
 
   constructor(scope: Construct, id: string, props: RdsStackProps) {
     super(scope, id, props);
+
+    const securityGroup = new SecurityGroup(
+      this,
+      `RDS-SG-${props.environment}`,
+      {
+        vpc: props.vpc,
+      },
+    );
+
+    securityGroup.addIngressRule(
+      Peer.ipv4(props.vpc.vpcCidrBlock),
+      Port.tcp(3306),
+      "Allow MySQL access from within VPC",
+    );
 
     const DB = new DatabaseInstance(
       this,
@@ -49,11 +67,30 @@ export class RdsStack extends Stack {
         credentials: Credentials.fromGeneratedSecret(props.rdsUserName),
         removalPolicy: RemovalPolicy.DESTROY,
         deletionProtection: false,
+        securityGroups: [securityGroup],
       },
     );
 
     this.dbSecret = DB.secret!;
     this.dbUrl = DB.dbInstanceEndpointAddress;
     this.dbPort = DB.dbInstanceEndpointPort;
+
+    new StringParameter(
+      this,
+      `${props.appName}-DB-Url-Param-${props.environment}`,
+      {
+        parameterName: `/${props.appName}/${props.environment}/DB_URL`,
+        stringValue: `jdbc:mysql://${this.dbUrl}:${this.dbPort}/${props.appName}`,
+      },
+    );
+
+    new StringParameter(
+      this,
+      `${props.appName}-DB-SecretArn-Param-${props.environment}`,
+      {
+        parameterName: `/${props.appName}/${props.environment}/DB_SECRET_ARN`,
+        stringValue: this.dbSecret.secretArn,
+      },
+    );
   }
 }
