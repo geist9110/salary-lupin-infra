@@ -7,7 +7,6 @@ import { VpcStack } from "../lib/network/VpcStack";
 import { RdsStack } from "../lib/storage/RdsStack";
 import { BackendStack } from "../lib/backend/BackendStack";
 import { BackendCertificateStack } from "../lib/cert/BackendCertificateStack";
-import { EcrStack } from "../lib/storage/EcrStack";
 
 const environment = process.env.NODE_ENV ?? "dev";
 dotenv.config({ path: `env/${environment}.env` });
@@ -21,19 +20,12 @@ const accountId = process.env.ACCOUNT_ID!;
 
 const appName = process.env.APP_NAME!;
 const githubOwner = process.env.GITHUB_OWNER!;
-const githubRepo = process.env.GITHUB_REPO_FRONTEND!;
+const githubRepoFrontend = process.env.GITHUB_REPO_FRONTEND!;
+const githubRepoBackend = process.env.GITHUB_REPO_BACKEND!;
 const githubConnectionArn = process.env.GITHUB_CONNECTION_ARN!;
 const githubBranch = process.env.BRANCH!;
 
 const vpcStack = new VpcStack(app, `VpcStack-${environment}`, {
-  environment: environment,
-  env: {
-    account: accountId,
-    region: "ap-northeast-2",
-  },
-});
-
-const ecrStack = new EcrStack(app, `EcrStack-${environment}`, {
   environment: environment,
   env: {
     account: accountId,
@@ -67,9 +59,17 @@ const rdsStack = new RdsStack(app, `RdsStack-${environment}`, {
 
 const backendStack = new BackendStack(app, `BackendStack-${environment}`, {
   environment: environment,
+  appName: appName,
   vpc: vpcStack.vpc,
   certificate: backendCertificateStack.albCertificate,
   hostedZone: backendCertificateStack.hostedZone,
+  githubRepo: githubRepoBackend,
+  githubOwner: githubOwner,
+  rdsSecret: rdsStack.dbSecret!,
+  rdsPort: rdsStack.dbPort,
+  rdsUrl: rdsStack.dbUrl,
+  githubConnectionArn: githubConnectionArn,
+  githubBranch: githubBranch,
   env: {
     account: accountId,
     region: "ap-northeast-2",
@@ -90,7 +90,7 @@ new FrontendStack(app, `FrontendStack-${environment}`, {
   appName: appName,
   environment: environment,
   githubOwner: githubOwner,
-  githubFrontendRepo: githubRepo,
+  githubFrontendRepo: githubRepoFrontend,
   githubConnectionArn: githubConnectionArn,
   githubBranch: githubBranch,
   certificateArn: domainStack.certificateArn,

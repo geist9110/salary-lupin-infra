@@ -8,7 +8,7 @@ interface BackendSecurityGroupProps {
 
 export class BackendSecurityGroup extends Construct {
   public readonly loadBalancerSecurityGroup: SecurityGroup;
-  public readonly ecsSecurityGroup: SecurityGroup;
+  public readonly ec2SecurityGroup: SecurityGroup;
 
   constructor(scope: Construct, id: string, props: BackendSecurityGroupProps) {
     super(scope, id);
@@ -47,7 +47,7 @@ export class BackendSecurityGroup extends Construct {
       "Allow HTTPS IPv6",
     );
 
-    this.ecsSecurityGroup = new SecurityGroup(
+    this.ec2SecurityGroup = new SecurityGroup(
       this,
       `Backend-ECS-SecurityGroup-${props.environment}`,
       {
@@ -57,9 +57,9 @@ export class BackendSecurityGroup extends Construct {
       },
     );
 
-    this.ecsSecurityGroup.addIngressRule(
+    this.ec2SecurityGroup.addIngressRule(
       this.loadBalancerSecurityGroup,
-      Port.tcp(80),
+      Port.tcp(8080),
       "Allow HTTP from Loadbalancer",
     );
   }
