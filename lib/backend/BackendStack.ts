@@ -5,10 +5,10 @@ import {
   InstanceSize,
   InstanceType,
   MachineImage,
+  SecurityGroup,
   SubnetType,
   Vpc,
 } from "aws-cdk-lib/aws-ec2";
-import { BackendSecurityGroup } from "./BackendSecurityGroup";
 import { BackendLoadBalancer } from "./BackendLoadBalancer";
 import { ARecord, IHostedZone, RecordTarget } from "aws-cdk-lib/aws-route53";
 import { LoadBalancerTarget } from "aws-cdk-lib/aws-route53-targets";
@@ -22,6 +22,8 @@ interface BackendStackProps extends StackProps {
   vpc: Vpc;
   certificate: Certificate;
   hostedZone: IHostedZone;
+  loadBalancerSecurityGroup: SecurityGroup;
+  ec2SecurityGroup: SecurityGroup;
 }
 
 export class BackendStack extends Stack {
@@ -29,15 +31,6 @@ export class BackendStack extends Stack {
 
   constructor(scope: Construct, id: string, props: BackendStackProps) {
     super(scope, id, props);
-
-    const securityGroup = new BackendSecurityGroup(
-      this,
-      `Backend-SecurityGroup-${props.environment}`,
-      {
-        environment: props.environment,
-        vpc: props.vpc,
-      },
-    );
 
     const instanceRole = new EC2InstanceRole(this, {
       environment: props.environment,
@@ -54,7 +47,7 @@ export class BackendStack extends Stack {
         maxCapacity: 2,
         desiredCapacity: 1,
         vpcSubnets: { subnetType: SubnetType.PUBLIC },
-        securityGroup: securityGroup.ec2SecurityGroup,
+        securityGroup: props.ec2SecurityGroup,
         role: instanceRole.role,
       },
     );
@@ -69,7 +62,7 @@ export class BackendStack extends Stack {
       {
         environment: props.environment,
         vpc: props.vpc,
-        securityGroup: securityGroup.loadBalancerSecurityGroup,
+        securityGroup: props.loadBalancerSecurityGroup,
         certificate: props.certificate,
       },
     );

@@ -8,6 +8,7 @@ import { RdsStack } from "../lib/storage/RdsStack";
 import { BackendStack } from "../lib/backend/BackendStack";
 import { BackendCertificateStack } from "../lib/cert/BackendCertificateStack";
 import { BackendPipeline } from "../lib/cicd/BackendPipeline";
+import { SecurityGroupStack } from "../lib/securityGroup/SecurityGroupStack";
 
 const environment = process.env.NODE_ENV ?? "dev";
 dotenv.config({ path: `env/${environment}.env` });
@@ -47,11 +48,22 @@ const backendCertificateStack = new BackendCertificateStack(
   },
 );
 
+const securityGroup = new SecurityGroupStack(app, {
+  environment: environment,
+  appName: appName,
+  vpc: vpcStack.vpc,
+  env: {
+    account: accountId,
+    region: "ap-northeast-2",
+  },
+});
+
 const rdsStack = new RdsStack(app, `RdsStack-${environment}`, {
   environment: environment,
   appName: appName,
   vpc: vpcStack.vpc,
   rdsUserName: rdsUserName,
+  securityGroup: securityGroup.rds,
   env: {
     account: accountId,
     region: "ap-northeast-2",
@@ -64,6 +76,8 @@ const backendStack = new BackendStack(app, `BackendStack-${environment}`, {
   vpc: vpcStack.vpc,
   certificate: backendCertificateStack.albCertificate,
   hostedZone: backendCertificateStack.hostedZone,
+  loadBalancerSecurityGroup: securityGroup.loadBalancer,
+  ec2SecurityGroup: securityGroup.ec2,
   env: {
     account: accountId,
     region: "ap-northeast-2",
