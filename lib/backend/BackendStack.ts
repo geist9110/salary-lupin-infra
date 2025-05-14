@@ -1,4 +1,4 @@
-import { RemovalPolicy, Stack, StackProps, Tags } from "aws-cdk-lib";
+import { Stack, StackProps, Tags } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import {
   InstanceClass,
@@ -13,25 +13,6 @@ import { BackendLoadBalancer } from "./BackendLoadBalancer";
 import { ARecord, IHostedZone, RecordTarget } from "aws-cdk-lib/aws-route53";
 import { LoadBalancerTarget } from "aws-cdk-lib/aws-route53-targets";
 import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
-import { Bucket } from "aws-cdk-lib/aws-s3";
-import { Artifact, Pipeline } from "aws-cdk-lib/aws-codepipeline";
-import {
-  BuildEnvironmentVariableType,
-  BuildSpec,
-  LinuxBuildImage,
-  PipelineProject,
-} from "aws-cdk-lib/aws-codebuild";
-import { ISecret } from "aws-cdk-lib/aws-secretsmanager";
-import {
-  CodeBuildAction,
-  CodeDeployServerDeployAction,
-  CodeStarConnectionsSourceAction,
-} from "aws-cdk-lib/aws-codepipeline-actions";
-import {
-  ServerApplication,
-  ServerDeploymentConfig,
-  ServerDeploymentGroup,
-} from "aws-cdk-lib/aws-codedeploy";
 import { AutoScalingGroup } from "aws-cdk-lib/aws-autoscaling";
 import {
   ManagedPolicy,
@@ -46,16 +27,11 @@ interface BackendStackProps extends StackProps {
   vpc: Vpc;
   certificate: Certificate;
   hostedZone: IHostedZone;
-  rdsSecret: ISecret;
-  rdsUrl: string;
-  rdsPort: string;
-  githubOwner: string;
-  githubRepo: string;
-  githubBranch: string;
-  githubConnectionArn: string;
 }
 
 export class BackendStack extends Stack {
+  public readonly autoScalingGroup: AutoScalingGroup;
+
   constructor(scope: Construct, id: string, props: BackendStackProps) {
     super(scope, id, props);
 
@@ -92,7 +68,7 @@ export class BackendStack extends Stack {
       }),
     );
 
-    const autoScalingGroup = new AutoScalingGroup(
+    this.autoScalingGroup = new AutoScalingGroup(
       this,
       `Backend-ASG-${props.environment}`,
       {
@@ -108,7 +84,7 @@ export class BackendStack extends Stack {
       },
     );
 
-    Tags.of(autoScalingGroup).add("env", props.environment, {
+    Tags.of(this.autoScalingGroup).add("env", props.environment, {
       applyToLaunchedInstances: true,
     });
 
@@ -123,7 +99,9 @@ export class BackendStack extends Stack {
       },
     );
 
-    autoScalingGroup.attachToApplicationTargetGroup(loadBalancer.targetGroup);
+    this.autoScalingGroup.attachToApplicationTargetGroup(
+      loadBalancer.targetGroup,
+    );
 
     new ARecord(this, `Backend-record-${props.environment}`, {
       zone: props.hostedZone,
@@ -131,104 +109,6 @@ export class BackendStack extends Stack {
       target: RecordTarget.fromAlias(
         new LoadBalancerTarget(loadBalancer.applicationLoadBalancer),
       ),
-    });
-
-    const artifactBucket = new Bucket(
-      this,
-      `Backend-ArtifactBucket-${props.environment}`,
-      {
-        removalPolicy: RemovalPolicy.DESTROY,
-        autoDeleteObjects: true,
-      },
-    );
-
-    const sourceOutput = new Artifact();
-    const buildOutput = new Artifact();
-
-    const project = new PipelineProject(
-      this,
-      `BackendBuildProject-${props.environment}`,
-      {
-        buildSpec: BuildSpec.fromSourceFilename("buildspec.yml"),
-        environment: {
-          buildImage: LinuxBuildImage.STANDARD_7_0,
-        },
-        environmentVariables: {
-          RDS_USERNAME: {
-            value: `${props.rdsSecret.secretArn}:username`,
-            type: BuildEnvironmentVariableType.SECRETS_MANAGER,
-          },
-          RDS_PASSWORD: {
-            value: `${props.rdsSecret.secretArn}:password`,
-            type: BuildEnvironmentVariableType.SECRETS_MANAGER,
-          },
-          RDS_URL: {
-            value: `jdbc:mysql://${props.rdsUrl}:${props.rdsPort}/${props.appName}`,
-            type: BuildEnvironmentVariableType.PLAINTEXT,
-          },
-        },
-      },
-    );
-
-    const pipeline = new Pipeline(
-      this,
-      `BackendPipeline-${props.environment}`,
-      {
-        artifactBucket: artifactBucket,
-        pipelineName: `Backend-Pipeline-${props.environment}`,
-      },
-    );
-
-    pipeline.addStage({
-      stageName: "Source",
-      actions: [
-        new CodeStarConnectionsSourceAction({
-          actionName: "Github_Source",
-          owner: props.githubOwner,
-          repo: props.githubRepo,
-          branch: props.githubBranch,
-          connectionArn: props.githubConnectionArn,
-          output: sourceOutput,
-        }),
-      ],
-    });
-
-    pipeline.addStage({
-      stageName: "Build",
-      actions: [
-        new CodeBuildAction({
-          actionName: "CodeBuild",
-          project: project,
-          input: sourceOutput,
-          outputs: [buildOutput],
-        }),
-      ],
-    });
-
-    const deploymentGroup = new ServerDeploymentGroup(
-      this,
-      `BackendDeploymentGroup-${props.environment}`,
-      {
-        application: new ServerApplication(
-          this,
-          `BackendCodeDeployApp-${props.environment}`,
-        ),
-        autoScalingGroups: [autoScalingGroup],
-        deploymentGroupName: `Backend-Deployment-Group-${props.environment}`,
-        installAgent: true,
-        deploymentConfig: ServerDeploymentConfig.ALL_AT_ONCE,
-      },
-    );
-
-    pipeline.addStage({
-      stageName: "Deploy",
-      actions: [
-        new CodeDeployServerDeployAction({
-          actionName: "DeployToEC2",
-          input: buildOutput,
-          deploymentGroup,
-        }),
-      ],
     });
   }
 }

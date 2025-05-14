@@ -1,0 +1,139 @@
+import { RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
+import { Construct } from "constructs";
+import { Bucket } from "aws-cdk-lib/aws-s3";
+import { Artifact, Pipeline } from "aws-cdk-lib/aws-codepipeline";
+import {
+  BuildEnvironmentVariableType,
+  BuildSpec,
+  LinuxBuildImage,
+  PipelineProject,
+} from "aws-cdk-lib/aws-codebuild";
+import {
+  CodeBuildAction,
+  CodeDeployServerDeployAction,
+  CodeStarConnectionsSourceAction,
+} from "aws-cdk-lib/aws-codepipeline-actions";
+import {
+  ServerApplication,
+  ServerDeploymentConfig,
+  ServerDeploymentGroup,
+} from "aws-cdk-lib/aws-codedeploy";
+import { ISecret } from "aws-cdk-lib/aws-secretsmanager";
+import { AutoScalingGroup } from "aws-cdk-lib/aws-autoscaling";
+
+interface BackendPipelineProps extends StackProps {
+  environment: string;
+  appName: string;
+  rdsSecret: ISecret;
+  rdsUrl: string;
+  rdsPort: string;
+  githubOwner: string;
+  githubRepo: string;
+  githubBranch: string;
+  githubConnectionArn: string;
+  autoScalingGroup: AutoScalingGroup;
+}
+
+export class BackendPipeline extends Stack {
+  constructor(scope: Construct, id: string, props: BackendPipelineProps) {
+    super(scope, id, props);
+
+    const artifactBucket = new Bucket(
+      this,
+      `Backend-ArtifactBucket-${props.environment}`,
+      {
+        removalPolicy: RemovalPolicy.DESTROY,
+        autoDeleteObjects: true,
+      },
+    );
+
+    const sourceOutput = new Artifact();
+    const buildOutput = new Artifact();
+
+    const project = new PipelineProject(
+      this,
+      `BackendBuildProject-${props.environment}`,
+      {
+        buildSpec: BuildSpec.fromSourceFilename("buildspec.yml"),
+        environment: {
+          buildImage: LinuxBuildImage.STANDARD_7_0,
+        },
+        environmentVariables: {
+          RDS_USERNAME: {
+            value: `${props.rdsSecret.secretArn}:username`,
+            type: BuildEnvironmentVariableType.SECRETS_MANAGER,
+          },
+          RDS_PASSWORD: {
+            value: `${props.rdsSecret.secretArn}:password`,
+            type: BuildEnvironmentVariableType.SECRETS_MANAGER,
+          },
+          RDS_URL: {
+            value: `jdbc:mysql://${props.rdsUrl}:${props.rdsPort}/${props.appName}`,
+            type: BuildEnvironmentVariableType.PLAINTEXT,
+          },
+        },
+      },
+    );
+
+    const pipeline = new Pipeline(
+      this,
+      `BackendPipeline-${props.environment}`,
+      {
+        artifactBucket: artifactBucket,
+        pipelineName: `Backend-Pipeline-${props.environment}`,
+      },
+    );
+
+    pipeline.addStage({
+      stageName: "Source",
+      actions: [
+        new CodeStarConnectionsSourceAction({
+          actionName: "Github_Source",
+          owner: props.githubOwner,
+          repo: props.githubRepo,
+          branch: props.githubBranch,
+          connectionArn: props.githubConnectionArn,
+          output: sourceOutput,
+        }),
+      ],
+    });
+
+    pipeline.addStage({
+      stageName: "Build",
+      actions: [
+        new CodeBuildAction({
+          actionName: "CodeBuild",
+          project: project,
+          input: sourceOutput,
+          outputs: [buildOutput],
+        }),
+      ],
+    });
+
+    const deploymentGroup = new ServerDeploymentGroup(
+      this,
+      `BackendDeploymentGroup-${props.environment}`,
+      {
+        application: new ServerApplication(
+          this,
+          `BackendCodeDeployApp-${props.environment}`,
+        ),
+        autoScalingGroups: [props.autoScalingGroup],
+        deploymentGroupName: `Backend-Deployment-Group-${props.environment}`,
+        installAgent: true,
+        deploymentConfig: ServerDeploymentConfig.ALL_AT_ONCE,
+      },
+    );
+
+    pipeline.addStage({
+      stageName: "Deploy",
+      actions: [
+        new CodeDeployServerDeployAction({
+          actionName: "DeployToEC2",
+          input: buildOutput,
+          deploymentGroup,
+        }),
+      ],
+    });
+  }
+}
