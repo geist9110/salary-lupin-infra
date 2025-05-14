@@ -1,6 +1,7 @@
 import { Construct } from "constructs";
-import { Port, SecurityGroup, Vpc } from "aws-cdk-lib/aws-ec2";
+import { SecurityGroup, Vpc } from "aws-cdk-lib/aws-ec2";
 import { LoadBalancerSecurityGroup } from "../securityGroup/LoadBalancerSecurityGroup";
+import { EC2InstanceSecurityGroup } from "../securityGroup/EC2InstanceSecurityGroup";
 
 interface BackendSecurityGroupProps {
   environment: string;
@@ -19,20 +20,10 @@ export class BackendSecurityGroup extends Construct {
       vpc: props.vpc,
     }).securityGroup;
 
-    this.ec2SecurityGroup = new SecurityGroup(
-      this,
-      `Backend-ECS-SecurityGroup-${props.environment}`,
-      {
-        vpc: props.vpc,
-        allowAllOutbound: true,
-        description: "Allow HTTP from LoadBalancer",
-      },
-    );
-
-    this.ec2SecurityGroup.addIngressRule(
-      this.loadBalancerSecurityGroup,
-      Port.tcp(8080),
-      "Allow HTTP from Loadbalancer",
-    );
+    this.ec2SecurityGroup = new EC2InstanceSecurityGroup(this, {
+      environment: props.environment,
+      vpc: props.vpc,
+      loadBalancerSecurityGroup: this.loadBalancerSecurityGroup,
+    }).securityGroup;
   }
 }
