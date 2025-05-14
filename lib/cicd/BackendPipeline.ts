@@ -1,6 +1,5 @@
-import { RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
+import { Stack, StackProps } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { Bucket } from "aws-cdk-lib/aws-s3";
 import { Artifact, Pipeline } from "aws-cdk-lib/aws-codepipeline";
 import {
   BuildEnvironmentVariableType,
@@ -20,6 +19,7 @@ import {
 } from "aws-cdk-lib/aws-codedeploy";
 import { ISecret } from "aws-cdk-lib/aws-secretsmanager";
 import { AutoScalingGroup } from "aws-cdk-lib/aws-autoscaling";
+import { ArtifactBucket } from "../storage/ArtifactBucket";
 
 interface BackendPipelineProps extends StackProps {
   environment: string;
@@ -38,14 +38,9 @@ export class BackendPipeline extends Stack {
   constructor(scope: Construct, id: string, props: BackendPipelineProps) {
     super(scope, id, props);
 
-    const artifactBucket = new Bucket(
-      this,
-      `Backend-ArtifactBucket-${props.environment}`,
-      {
-        removalPolicy: RemovalPolicy.DESTROY,
-        autoDeleteObjects: true,
-      },
-    );
+    const artifactBucket = new ArtifactBucket(this, {
+      environment: props.environment,
+    });
 
     const sourceOutput = new Artifact();
     const buildOutput = new Artifact();
@@ -79,7 +74,7 @@ export class BackendPipeline extends Stack {
       this,
       `BackendPipeline-${props.environment}`,
       {
-        artifactBucket: artifactBucket,
+        artifactBucket: artifactBucket.bucket,
         pipelineName: `Backend-Pipeline-${props.environment}`,
       },
     );
