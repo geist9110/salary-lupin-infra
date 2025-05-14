@@ -14,12 +14,7 @@ import { ARecord, IHostedZone, RecordTarget } from "aws-cdk-lib/aws-route53";
 import { LoadBalancerTarget } from "aws-cdk-lib/aws-route53-targets";
 import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
 import { AutoScalingGroup } from "aws-cdk-lib/aws-autoscaling";
-import {
-  ManagedPolicy,
-  PolicyStatement,
-  Role,
-  ServicePrincipal,
-} from "aws-cdk-lib/aws-iam";
+import { EC2InstanceRole } from "../iam/EC2InstanceRole";
 
 interface BackendStackProps extends StackProps {
   environment: string;
@@ -44,29 +39,9 @@ export class BackendStack extends Stack {
       },
     );
 
-    const instanceRole = new Role(
-      this,
-      `BackendInstanceRole-${props.environment}`,
-      {
-        assumedBy: new ServicePrincipal("ec2.amazonaws.com"),
-        description: "Role for EC2 instances in the backend ASG",
-      },
-    );
-
-    instanceRole.addManagedPolicy(
-      ManagedPolicy.fromAwsManagedPolicyName("AmazonSSMManagedInstanceCore"),
-    );
-
-    instanceRole.addToPolicy(
-      new PolicyStatement({
-        actions: [
-          "ssm:GetParameter",
-          "secretsmanager:GetSecretValue",
-          "ec2:DescribeTags",
-        ],
-        resources: ["*"],
-      }),
-    );
+    const instanceRole = new EC2InstanceRole(this, {
+      environment: props.environment,
+    });
 
     this.autoScalingGroup = new AutoScalingGroup(
       this,
@@ -80,7 +55,7 @@ export class BackendStack extends Stack {
         desiredCapacity: 1,
         vpcSubnets: { subnetType: SubnetType.PUBLIC },
         securityGroup: securityGroup.ec2SecurityGroup,
-        role: instanceRole,
+        role: instanceRole.role,
       },
     );
 
