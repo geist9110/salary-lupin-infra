@@ -7,7 +7,6 @@ import { VpcStack } from "../lib/network/VpcStack";
 import { RdsStack } from "../lib/storage/RdsStack";
 import { BackendStack } from "../lib/backend/BackendStack";
 import { BackendCertificateStack } from "../lib/cert/BackendCertificateStack";
-import { BackendPipeline } from "../lib/cicd/BackendPipeline";
 import { SecurityGroupStack } from "../lib/securityGroup/SecurityGroupStack";
 
 const environment = process.env.NODE_ENV ?? "dev";
@@ -78,15 +77,6 @@ const backendStack = new BackendStack(app, `BackendStack-${environment}`, {
   hostedZone: backendCertificateStack.hostedZone,
   loadBalancerSecurityGroup: securityGroup.loadBalancer,
   ec2SecurityGroup: securityGroup.ec2,
-  env: {
-    account: accountId,
-    region: "ap-northeast-2",
-  },
-});
-
-new BackendPipeline(app, `BackendPipeline-${environment}`, {
-  environment: environment,
-  appName: appName,
   githubRepo: githubRepoBackend,
   githubOwner: githubOwner,
   rdsSecret: rdsStack.dbSecret!,
@@ -94,7 +84,6 @@ new BackendPipeline(app, `BackendPipeline-${environment}`, {
   rdsUrl: rdsStack.dbUrl,
   githubConnectionArn: githubConnectionArn,
   githubBranch: githubBranch,
-  autoScalingGroup: backendStack.autoScalingGroup,
   env: {
     account: accountId,
     region: "ap-northeast-2",

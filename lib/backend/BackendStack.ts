@@ -15,6 +15,8 @@ import { LoadBalancerTarget } from "aws-cdk-lib/aws-route53-targets";
 import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
 import { AutoScalingGroup } from "aws-cdk-lib/aws-autoscaling";
 import { EC2InstanceRole } from "../iam/EC2InstanceRole";
+import { BackendPipeline } from "../cicd/BackendPipeline";
+import { ISecret } from "aws-cdk-lib/aws-secretsmanager";
 
 interface BackendStackProps extends StackProps {
   environment: string;
@@ -24,6 +26,13 @@ interface BackendStackProps extends StackProps {
   hostedZone: IHostedZone;
   loadBalancerSecurityGroup: SecurityGroup;
   ec2SecurityGroup: SecurityGroup;
+  rdsSecret: ISecret;
+  rdsUrl: string;
+  rdsPort: string;
+  githubOwner: string;
+  githubRepo: string;
+  githubBranch: string;
+  githubConnectionArn: string;
 }
 
 export class BackendStack extends Stack {
@@ -70,6 +79,19 @@ export class BackendStack extends Stack {
     this.autoScalingGroup.attachToApplicationTargetGroup(
       loadBalancer.targetGroup,
     );
+
+    new BackendPipeline(this, {
+      environment: props.environment,
+      appName: props.appName,
+      autoScalingGroup: this.autoScalingGroup,
+      rdsSecret: props.rdsSecret,
+      rdsUrl: props.rdsUrl,
+      rdsPort: props.rdsPort,
+      githubOwner: props.githubOwner,
+      githubRepo: props.githubRepo,
+      githubConnectionArn: props.githubConnectionArn,
+      githubBranch: props.githubBranch,
+    });
 
     new ARecord(this, `Backend-record-${props.environment}`, {
       zone: props.hostedZone,

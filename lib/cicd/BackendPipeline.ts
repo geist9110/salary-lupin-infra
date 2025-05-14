@@ -1,4 +1,3 @@
-import { Stack, StackProps } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { Artifact, Pipeline } from "aws-cdk-lib/aws-codepipeline";
 import {
@@ -21,7 +20,7 @@ import { ISecret } from "aws-cdk-lib/aws-secretsmanager";
 import { AutoScalingGroup } from "aws-cdk-lib/aws-autoscaling";
 import { ArtifactBucket } from "../storage/ArtifactBucket";
 
-interface BackendPipelineProps extends StackProps {
+interface BackendPipelineProps {
   environment: string;
   appName: string;
   rdsSecret: ISecret;
@@ -34,9 +33,9 @@ interface BackendPipelineProps extends StackProps {
   autoScalingGroup: AutoScalingGroup;
 }
 
-export class BackendPipeline extends Stack {
-  constructor(scope: Construct, id: string, props: BackendPipelineProps) {
-    super(scope, id, props);
+export class BackendPipeline extends Construct {
+  constructor(scope: Construct, props: BackendPipelineProps) {
+    super(scope, `Pipeline-${props.environment}`);
 
     const artifactBucket = new ArtifactBucket(this, {
       environment: props.environment,
@@ -126,7 +125,7 @@ export class BackendPipeline extends Stack {
         new CodeDeployServerDeployAction({
           actionName: "DeployToEC2",
           input: buildOutput,
-          deploymentGroup,
+          deploymentGroup: deploymentGroup,
         }),
       ],
     });
