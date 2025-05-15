@@ -1,7 +1,7 @@
 import { Stack, StackProps } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { FrontendCodeBuild } from "./FrontendCodeBuild";
-import { FrontendCodePipeline } from "./FrontendCodePipeline";
+import { FrontendPipeline } from "../cicd/FrontendPipeline";
 import { WebBucket } from "../storage/WebBucket";
 import { ArtifactBucket } from "../storage/ArtifactBucket";
 import { SPACloudFront } from "../cdn/SPACloudFront";
@@ -33,7 +33,7 @@ export class FrontendStack extends Stack {
       artifactBucket: artifactBucket,
     });
 
-    const codePipeline = new FrontendCodePipeline(this, "Pipeline", {
+    const codePipeline = new FrontendPipeline(this, {
       environment: props.environment,
       github: props.github,
       buildProject: codeBuild.build,
