@@ -1,7 +1,10 @@
 import { Stack, StackProps } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import * as route53 from "aws-cdk-lib/aws-route53";
-import * as acm from "aws-cdk-lib/aws-certificatemanager";
+import { HostedZone } from "aws-cdk-lib/aws-route53";
+import {
+  Certificate,
+  CertificateValidation,
+} from "aws-cdk-lib/aws-certificatemanager";
 import { getRecordName } from "../util/domainUtil";
 
 interface FrontendCertificateStackProps extends StackProps {
@@ -17,16 +20,16 @@ export class FrontendCertificateStack extends Stack {
   constructor(scope: Construct, props: FrontendCertificateStackProps) {
     super(scope, `Frontend-Certificate-Stack-${props.environment}`, props);
 
-    const hostedZone = route53.HostedZone.fromLookup(this, `HostedZone`, {
+    const hostedZone = HostedZone.fromLookup(this, `HostedZone`, {
       domainName: props.domainName,
     });
 
-    const certificate = new acm.Certificate(
+    const certificate = new Certificate(
       this,
       `Certificate-${props.environment}`,
       {
         domainName: `${getRecordName("www", props.environment)}.${props.domainName}`,
-        validation: acm.CertificateValidation.fromDns(hostedZone),
+        validation: CertificateValidation.fromDns(hostedZone),
       },
     );
 
