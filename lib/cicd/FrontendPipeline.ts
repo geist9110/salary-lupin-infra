@@ -27,7 +27,7 @@ export class FrontendPipeline extends Construct {
     const buildOutput = new Artifact();
 
     this.pipeline = new Pipeline(this, `Pipeline-${props.environment}`, {
-      pipelineName: `Backend-Pipeline-${props.environment}`,
+      pipelineName: `Frontend-Pipeline-${props.environment}`,
       artifactBucket: props.artifactBucket,
     });
 
