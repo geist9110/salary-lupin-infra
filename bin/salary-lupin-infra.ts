@@ -5,7 +5,7 @@ import * as dotenv from "dotenv";
 import { DomainStack } from "../lib/domain/DomainStack";
 import { VpcStack } from "../lib/network/VpcStack";
 import { RdsStack } from "../lib/storage/RdsStack";
-import { BackendStack } from "../lib/backend/BackendStack";
+import { BackendStack } from "../lib/apps/BackendStack";
 import { BackendCertificateStack } from "../lib/cert/BackendCertificateStack";
 import { SecurityGroupStack } from "../lib/securityGroup/SecurityGroupStack";
 
@@ -69,7 +69,7 @@ const rdsStack = new RdsStack(app, `RdsStack-${environment}`, {
   },
 });
 
-const backendStack = new BackendStack(app, `BackendStack-${environment}`, {
+new BackendStack(app, {
   environment: environment,
   appName: appName,
   vpc: vpcStack.vpc,

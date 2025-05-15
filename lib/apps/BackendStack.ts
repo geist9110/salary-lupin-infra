@@ -26,8 +26,8 @@ interface BackendStackProps extends StackProps {
 }
 
 export class BackendStack extends Stack {
-  constructor(scope: Construct, id: string, props: BackendStackProps) {
-    super(scope, id, props);
+  constructor(scope: Construct, props: BackendStackProps) {
+    super(scope, `${props.appName}-BackendStack-${props.environment}`, props);
 
     const instanceRole = new EC2InstanceRole(this, {
       environment: props.environment,
