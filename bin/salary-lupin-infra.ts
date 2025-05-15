@@ -63,7 +63,7 @@ const securityGroup = new SecurityGroupStack(app, {
   },
 });
 
-const rdsStack = new RdsStack(app, `RdsStack-${environment}`, {
+const rdsStack = new RdsStack(app, {
   environment: environment,
   appName: appName,
   vpc: vpcStack.vpc,
