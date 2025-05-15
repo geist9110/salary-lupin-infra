@@ -4,15 +4,16 @@ import { SubnetType, Vpc } from "aws-cdk-lib/aws-ec2";
 
 interface VpcStackProps extends StackProps {
   environment: string;
+  appName: string;
 }
 
 export class VpcStack extends Stack {
   public readonly vpc: Vpc;
 
-  constructor(scope: Construct, id: string, props: VpcStackProps) {
-    super(scope, id, props);
+  constructor(scope: Construct, props: VpcStackProps) {
+    super(scope, `${props.appName}-Vpc-Stack-${props.environment}`, props);
 
-    this.vpc = new Vpc(this, `Salary-lupin-VPC-${props.environment}`, {
+    this.vpc = new Vpc(this, `VPC-${props.environment}`, {
       maxAzs: 2,
       natGateways: 0,
       subnetConfiguration: [

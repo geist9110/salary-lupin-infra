@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import * as cdk from "aws-cdk-lib";
-import { FrontendStack } from "../lib/frontend/frontend-stack";
+import { FrontendStack } from "../lib/apps/FrontendStack";
 import * as dotenv from "dotenv";
-import { DomainStack } from "../lib/domain/DomainStack";
+import { FrontendCertificateStack } from "../lib/cert/FrontendCertificateStack";
 import { VpcStack } from "../lib/network/VpcStack";
 import { RdsStack } from "../lib/storage/RdsStack";
 import { BackendStack } from "../lib/apps/BackendStack";
@@ -26,26 +26,35 @@ const githubRepoBackend = process.env.GITHUB_REPO_BACKEND!;
 const githubConnectionArn = process.env.GITHUB_CONNECTION_ARN!;
 const githubBranch = process.env.BRANCH!;
 
-const vpcStack = new VpcStack(app, `VpcStack-${environment}`, {
+const vpcStack = new VpcStack(app, {
   environment: environment,
+  appName: appName,
   env: {
     account: accountId,
     region: "ap-northeast-2",
   },
 });
 
-const backendCertificateStack = new BackendCertificateStack(
-  app,
-  `BackendCertificateStack-${environment}`,
-  {
-    environment: environment,
-    domainName: domainName,
-    env: {
-      account: accountId,
-      region: "ap-northeast-2",
-    },
+const backendCertificateStack = new BackendCertificateStack(app, {
+  environment: environment,
+  appName: appName,
+  domainName: domainName,
+  env: {
+    account: accountId,
+    region: "ap-northeast-2",
   },
-);
+});
+
+const frontendCertificateStack = new FrontendCertificateStack(app, {
+  environment: environment,
+  appName: appName,
+  domainName: domainName,
+  env: {
+    account: accountId,
+    region: "us-east-1",
+  },
+  crossRegionReferences: true,
+});
 
 const securityGroup = new SecurityGroupStack(app, {
   environment: environment,
@@ -57,7 +66,7 @@ const securityGroup = new SecurityGroupStack(app, {
   },
 });
 
-const rdsStack = new RdsStack(app, `RdsStack-${environment}`, {
+const rdsStack = new RdsStack(app, {
   environment: environment,
   appName: appName,
   vpc: vpcStack.vpc,
@@ -92,26 +101,18 @@ new BackendStack(app, {
   },
 });
 
-const domainStack = new DomainStack(app, "DomainStack", {
-  environment: environment,
-  domainName: domainName,
-  env: {
-    account: accountId,
-    region: "us-east-1",
-  },
-  crossRegionReferences: true,
-});
-
-new FrontendStack(app, `FrontendStack-${environment}`, {
+new FrontendStack(app, {
   appName: appName,
   environment: environment,
-  githubOwner: githubOwner,
-  githubFrontendRepo: githubRepoFrontend,
-  githubConnectionArn: githubConnectionArn,
-  githubBranch: githubBranch,
-  certificateArn: domainStack.certificateArn,
-  hostedZoneId: domainStack.hostedZoneId,
-  hostedZoneName: domainStack.hostedZoneName,
+  github: {
+    owner: githubOwner,
+    connectionArn: githubConnectionArn,
+    repository: githubRepoFrontend,
+    branch: githubBranch,
+  },
+  certificateArn: frontendCertificateStack.certificateArn,
+  hostedZoneId: frontendCertificateStack.hostedZoneId,
+  hostedZoneName: frontendCertificateStack.hostedZoneName,
   env: {
     account: accountId,
     region: "ap-northeast-2",
