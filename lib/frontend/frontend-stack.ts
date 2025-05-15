@@ -2,9 +2,9 @@ import { Stack, StackProps } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { FrontendCodeBuild } from "./FrontendCodeBuild";
 import { FrontendCodePipeline } from "./FrontendCodePipeline";
-import { FrontendCloudfront } from "./FrontendCloudfront";
 import { WebBucket } from "../storage/WebBucket";
 import { ArtifactBucket } from "../storage/ArtifactBucket";
+import { SPACloudFront } from "../cdn/SPACloudFront";
 
 interface FrontendStackProps extends StackProps {
   appName: string;
@@ -46,7 +46,7 @@ export class FrontendStack extends Stack {
       artifactBucket: artifactBucket,
     });
 
-    const cloudfront = new FrontendCloudfront(this, "Cloudfront", {
+    const cloudfront = new SPACloudFront(this, {
       environment: props.environment,
       bucket: webBucket,
       certificateArn: props.certificateArn,
