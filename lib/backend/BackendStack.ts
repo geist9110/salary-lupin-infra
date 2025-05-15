@@ -17,6 +17,7 @@ import { AutoScalingGroup } from "aws-cdk-lib/aws-autoscaling";
 import { EC2InstanceRole } from "../iam/EC2InstanceRole";
 import { BackendPipeline } from "../cicd/BackendPipeline";
 import { ISecret } from "aws-cdk-lib/aws-secretsmanager";
+import { GithubConfig } from "../common/GithubConfig";
 
 interface BackendStackProps extends StackProps {
   environment: string;
@@ -29,10 +30,7 @@ interface BackendStackProps extends StackProps {
   rdsSecret: ISecret;
   rdsUrl: string;
   rdsPort: string;
-  githubOwner: string;
-  githubRepo: string;
-  githubBranch: string;
-  githubConnectionArn: string;
+  github: GithubConfig;
 }
 
 export class BackendStack extends Stack {
@@ -87,10 +85,7 @@ export class BackendStack extends Stack {
       rdsSecret: props.rdsSecret,
       rdsUrl: props.rdsUrl,
       rdsPort: props.rdsPort,
-      githubOwner: props.githubOwner,
-      githubRepo: props.githubRepo,
-      githubConnectionArn: props.githubConnectionArn,
-      githubBranch: props.githubBranch,
+      github: props.github,
     });
 
     new ARecord(this, `Backend-record-${props.environment}`, {

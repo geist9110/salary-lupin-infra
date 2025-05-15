@@ -19,6 +19,7 @@ import {
 import { ISecret } from "aws-cdk-lib/aws-secretsmanager";
 import { AutoScalingGroup } from "aws-cdk-lib/aws-autoscaling";
 import { ArtifactBucket } from "../storage/ArtifactBucket";
+import { GithubConfig } from "../common/GithubConfig";
 
 interface BackendPipelineProps {
   environment: string;
@@ -26,10 +27,7 @@ interface BackendPipelineProps {
   rdsSecret: ISecret;
   rdsUrl: string;
   rdsPort: string;
-  githubOwner: string;
-  githubRepo: string;
-  githubBranch: string;
-  githubConnectionArn: string;
+  github: GithubConfig;
   autoScalingGroup: AutoScalingGroup;
 }
 
@@ -83,10 +81,10 @@ export class BackendPipeline extends Construct {
       actions: [
         new CodeStarConnectionsSourceAction({
           actionName: "Github_Source",
-          owner: props.githubOwner,
-          repo: props.githubRepo,
-          branch: props.githubBranch,
-          connectionArn: props.githubConnectionArn,
+          owner: props.github.owner,
+          repo: props.github.repository,
+          branch: props.github.branch,
+          connectionArn: props.github.connectionArn,
           output: sourceOutput,
         }),
       ],
