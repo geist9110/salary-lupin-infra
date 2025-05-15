@@ -10,8 +10,6 @@ import {
   InstanceClass,
   InstanceSize,
   InstanceType,
-  Peer,
-  Port,
   SecurityGroup,
   SubnetType,
   Vpc,
@@ -24,6 +22,7 @@ interface RdsStackProps extends StackProps {
   appName: string;
   vpc: Vpc;
   rdsUserName: string;
+  securityGroup: SecurityGroup;
 }
 
 export class RdsStack extends Stack {
@@ -33,20 +32,6 @@ export class RdsStack extends Stack {
 
   constructor(scope: Construct, id: string, props: RdsStackProps) {
     super(scope, id, props);
-
-    const securityGroup = new SecurityGroup(
-      this,
-      `RDS-SG-${props.environment}`,
-      {
-        vpc: props.vpc,
-      },
-    );
-
-    securityGroup.addIngressRule(
-      Peer.ipv4(props.vpc.vpcCidrBlock),
-      Port.tcp(3306),
-      "Allow MySQL access from within VPC",
-    );
 
     const DB = new DatabaseInstance(
       this,
@@ -67,7 +52,7 @@ export class RdsStack extends Stack {
         credentials: Credentials.fromGeneratedSecret(props.rdsUserName),
         removalPolicy: RemovalPolicy.DESTROY,
         deletionProtection: false,
-        securityGroups: [securityGroup],
+        securityGroups: [props.securityGroup],
       },
     );
 

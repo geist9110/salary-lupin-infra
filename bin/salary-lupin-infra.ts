@@ -5,8 +5,9 @@ import * as dotenv from "dotenv";
 import { DomainStack } from "../lib/domain/DomainStack";
 import { VpcStack } from "../lib/network/VpcStack";
 import { RdsStack } from "../lib/storage/RdsStack";
-import { BackendStack } from "../lib/backend/BackendStack";
+import { BackendStack } from "../lib/apps/BackendStack";
 import { BackendCertificateStack } from "../lib/cert/BackendCertificateStack";
+import { SecurityGroupStack } from "../lib/securityGroup/SecurityGroupStack";
 
 const environment = process.env.NODE_ENV ?? "dev";
 dotenv.config({ path: `env/${environment}.env` });
@@ -46,30 +47,45 @@ const backendCertificateStack = new BackendCertificateStack(
   },
 );
 
-const rdsStack = new RdsStack(app, `RdsStack-${environment}`, {
+const securityGroup = new SecurityGroupStack(app, {
   environment: environment,
   appName: appName,
   vpc: vpcStack.vpc,
-  rdsUserName: rdsUserName,
   env: {
     account: accountId,
     region: "ap-northeast-2",
   },
 });
 
-const backendStack = new BackendStack(app, `BackendStack-${environment}`, {
+const rdsStack = new RdsStack(app, `RdsStack-${environment}`, {
+  environment: environment,
+  appName: appName,
+  vpc: vpcStack.vpc,
+  rdsUserName: rdsUserName,
+  securityGroup: securityGroup.rds,
+  env: {
+    account: accountId,
+    region: "ap-northeast-2",
+  },
+});
+
+new BackendStack(app, {
   environment: environment,
   appName: appName,
   vpc: vpcStack.vpc,
   certificate: backendCertificateStack.albCertificate,
   hostedZone: backendCertificateStack.hostedZone,
-  githubRepo: githubRepoBackend,
-  githubOwner: githubOwner,
+  loadBalancerSecurityGroup: securityGroup.loadBalancer,
+  ec2SecurityGroup: securityGroup.ec2,
   rdsSecret: rdsStack.dbSecret!,
   rdsPort: rdsStack.dbPort,
   rdsUrl: rdsStack.dbUrl,
-  githubConnectionArn: githubConnectionArn,
-  githubBranch: githubBranch,
+  github: {
+    owner: githubOwner,
+    connectionArn: githubConnectionArn,
+    repository: githubRepoBackend,
+    branch: githubBranch,
+  },
   env: {
     account: accountId,
     region: "ap-northeast-2",
