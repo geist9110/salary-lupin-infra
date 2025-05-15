@@ -26,7 +26,7 @@ const githubRepoBackend = process.env.GITHUB_REPO_BACKEND!;
 const githubConnectionArn = process.env.GITHUB_CONNECTION_ARN!;
 const githubBranch = process.env.BRANCH!;
 
-const vpcStack = new VpcStack(app, `VpcStack-${environment}`, {
+const vpcStack = new VpcStack(app, {
   environment: environment,
   env: {
     account: accountId,
