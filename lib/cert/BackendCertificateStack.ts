@@ -10,6 +10,7 @@ import { getRecordName } from "../util/domainUtil";
 
 interface BackendCertificateStackProps extends StackProps {
   environment: string;
+  appName: string;
   domainName: string;
 }
 
@@ -18,7 +19,11 @@ export class BackendCertificateStack extends Stack {
   public readonly hostedZone: IHostedZone;
 
   constructor(scope: Construct, props: BackendCertificateStackProps) {
-    super(scope, `Backend-Certificate-Stack-${props.environment}`, props);
+    super(
+      scope,
+      `${props.appName}-Backend-Certificate-Stack-${props.environment}`,
+      props,
+    );
 
     this.hostedZone = route53.HostedZone.fromLookup(
       this,

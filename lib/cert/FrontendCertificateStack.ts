@@ -9,6 +9,7 @@ import { getRecordName } from "../util/domainUtil";
 
 interface FrontendCertificateStackProps extends StackProps {
   environment: string;
+  appName: string;
   domainName: string;
 }
 
@@ -18,7 +19,11 @@ export class FrontendCertificateStack extends Stack {
   public readonly certificateArn: string;
 
   constructor(scope: Construct, props: FrontendCertificateStackProps) {
-    super(scope, `Frontend-Certificate-Stack-${props.environment}`, props);
+    super(
+      scope,
+      `${props.appName}-Frontend-Certificate-Stack-${props.environment}`,
+      props,
+    );
 
     const hostedZone = HostedZone.fromLookup(this, `HostedZone`, {
       domainName: props.domainName,

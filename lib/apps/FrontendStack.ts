@@ -21,7 +21,7 @@ interface FrontendStackProps extends StackProps {
 
 export class FrontendStack extends Stack {
   constructor(scope: Construct, props: FrontendStackProps) {
-    super(scope, `${props.appName}-FrontendStack-${props.environment}`, props);
+    super(scope, `${props.appName}-Frontend-Stack-${props.environment}`, props);
 
     const webBucket = new WebBucket(this, {
       environment: props.environment,

@@ -31,7 +31,7 @@ export class RdsStack extends Stack {
   public readonly dbPort: string;
 
   constructor(scope: Construct, props: RdsStackProps) {
-    super(scope, `Rds-Stack-${props.environment}`, props);
+    super(scope, `${props.appName}-Rds-Stack-${props.environment}`, props);
 
     const DB = new DatabaseInstance(
       this,
