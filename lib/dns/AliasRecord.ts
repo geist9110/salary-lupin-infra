@@ -5,6 +5,7 @@ import {
   IHostedZone,
   RecordTarget,
 } from "aws-cdk-lib/aws-route53";
+import { getRecordName } from "../util/domainUtil";
 
 interface AliasRecordProps {
   environment: string;
@@ -19,16 +20,8 @@ export class AliasRecord extends Construct {
 
     new ARecord(this, `Record-${props.environment}`, {
       zone: props.hostedZone,
-      recordName: this.getRecordName(props.subDomain, props.environment),
+      recordName: getRecordName(props.subDomain, props.environment),
       target: RecordTarget.fromAlias(props.recordTarget),
     });
-  }
-
-  private getRecordName(subDomain: string, environment: string): string {
-    return `${subDomain}${this.isProduction(environment) ? "" : "." + environment}}`;
-  }
-
-  private isProduction(environment: string): boolean {
-    return environment == "prod";
   }
 }

@@ -6,6 +6,7 @@ import {
 } from "aws-cdk-lib/aws-certificatemanager";
 import * as route53 from "aws-cdk-lib/aws-route53";
 import { IHostedZone } from "aws-cdk-lib/aws-route53";
+import { getRecordName } from "../util/domainUtil";
 
 interface BackendCertificateStackProps extends StackProps {
   environment: string;
@@ -31,7 +32,7 @@ export class BackendCertificateStack extends Stack {
       this,
       `BackendCertificate-${props.environment}`,
       {
-        domainName: `api.${props.environment == "prod" ? "" : props.environment + "."}${props.domainName}`,
+        domainName: `${getRecordName("api", props.environment)}.${props.domainName}`,
         validation: CertificateValidation.fromDns(this.hostedZone),
       },
     );
