@@ -105,10 +105,12 @@ const domainStack = new DomainStack(app, "DomainStack", {
 new FrontendStack(app, `FrontendStack-${environment}`, {
   appName: appName,
   environment: environment,
-  githubOwner: githubOwner,
-  githubFrontendRepo: githubRepoFrontend,
-  githubConnectionArn: githubConnectionArn,
-  githubBranch: githubBranch,
+  github: {
+    owner: githubOwner,
+    connectionArn: githubConnectionArn,
+    repository: githubRepoFrontend,
+    branch: githubBranch,
+  },
   certificateArn: domainStack.certificateArn,
   hostedZoneId: domainStack.hostedZoneId,
   hostedZoneName: domainStack.hostedZoneName,

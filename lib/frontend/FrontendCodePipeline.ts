@@ -3,13 +3,11 @@ import * as s3 from "aws-cdk-lib/aws-s3";
 import * as codepipeline from "aws-cdk-lib/aws-codepipeline";
 import * as codepipeline_actions from "aws-cdk-lib/aws-codepipeline-actions";
 import * as codebuild from "aws-cdk-lib/aws-codebuild";
+import { GithubConfig } from "../common/GithubConfig";
 
 interface FrontendCodePipelineProps {
   environment: string;
-  githubOwner: string;
-  githubRepo: string;
-  githubBranch: string;
-  githubConnectionArn: string;
+  github: GithubConfig;
   buildProject: codebuild.PipelineProject;
   targetBucket: s3.Bucket;
   artifactBucket: s3.Bucket;
@@ -43,10 +41,10 @@ export class FrontendCodePipeline extends Construct {
       actions: [
         new codepipeline_actions.CodeStarConnectionsSourceAction({
           actionName: "Github_Source",
-          owner: props.githubOwner,
-          repo: props.githubRepo,
-          branch: props.githubBranch,
-          connectionArn: props.githubConnectionArn,
+          owner: props.github.owner,
+          repo: props.github.repository,
+          branch: props.github.branch,
+          connectionArn: props.github.connectionArn,
           output: output,
         }),
       ],

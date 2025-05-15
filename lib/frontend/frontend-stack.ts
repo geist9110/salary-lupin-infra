@@ -5,14 +5,12 @@ import { FrontendCodePipeline } from "./FrontendCodePipeline";
 import { WebBucket } from "../storage/WebBucket";
 import { ArtifactBucket } from "../storage/ArtifactBucket";
 import { SPACloudFront } from "../cdn/SPACloudFront";
+import { GithubConfig } from "../common/GithubConfig";
 
 interface FrontendStackProps extends StackProps {
   appName: string;
   environment: string;
-  githubOwner: string;
-  githubFrontendRepo: string;
-  githubConnectionArn: string;
-  githubBranch: string;
+  github: GithubConfig;
   certificateArn: string;
   hostedZoneId: string;
   hostedZoneName: string;
@@ -37,10 +35,7 @@ export class FrontendStack extends Stack {
 
     const codePipeline = new FrontendCodePipeline(this, "Pipeline", {
       environment: props.environment,
-      githubOwner: props.githubOwner,
-      githubRepo: props.githubFrontendRepo,
-      githubBranch: props.githubBranch,
-      githubConnectionArn: props.githubConnectionArn,
+      github: props.github,
       buildProject: codeBuild.build,
       targetBucket: webBucket,
       artifactBucket: artifactBucket,
