@@ -2,7 +2,7 @@
 import * as cdk from "aws-cdk-lib";
 import { FrontendStack } from "../lib/apps/FrontendStack";
 import * as dotenv from "dotenv";
-import { DomainStack } from "../lib/domain/DomainStack";
+import { FrontendCertificateStack } from "../lib/cert/FrontendCertificateStack";
 import { VpcStack } from "../lib/network/VpcStack";
 import { RdsStack } from "../lib/storage/RdsStack";
 import { BackendStack } from "../lib/apps/BackendStack";
@@ -46,6 +46,16 @@ const backendCertificateStack = new BackendCertificateStack(
     },
   },
 );
+
+const frontendCertificateStack = new FrontendCertificateStack(app, {
+  environment: environment,
+  domainName: domainName,
+  env: {
+    account: accountId,
+    region: "us-east-1",
+  },
+  crossRegionReferences: true,
+});
 
 const securityGroup = new SecurityGroupStack(app, {
   environment: environment,
@@ -92,16 +102,6 @@ new BackendStack(app, {
   },
 });
 
-const domainStack = new DomainStack(app, "DomainStack", {
-  environment: environment,
-  domainName: domainName,
-  env: {
-    account: accountId,
-    region: "us-east-1",
-  },
-  crossRegionReferences: true,
-});
-
 new FrontendStack(app, {
   appName: appName,
   environment: environment,
@@ -111,9 +111,9 @@ new FrontendStack(app, {
     repository: githubRepoFrontend,
     branch: githubBranch,
   },
-  certificateArn: domainStack.certificateArn,
-  hostedZoneId: domainStack.hostedZoneId,
-  hostedZoneName: domainStack.hostedZoneName,
+  certificateArn: frontendCertificateStack.certificateArn,
+  hostedZoneId: frontendCertificateStack.hostedZoneId,
+  hostedZoneName: frontendCertificateStack.hostedZoneName,
   env: {
     account: accountId,
     region: "ap-northeast-2",
