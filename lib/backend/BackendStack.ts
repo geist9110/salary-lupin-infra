@@ -9,7 +9,6 @@ import {
   SubnetType,
   Vpc,
 } from "aws-cdk-lib/aws-ec2";
-import { BackendLoadBalancer } from "./BackendLoadBalancer";
 import { ARecord, IHostedZone, RecordTarget } from "aws-cdk-lib/aws-route53";
 import { LoadBalancerTarget } from "aws-cdk-lib/aws-route53-targets";
 import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
@@ -18,6 +17,7 @@ import { EC2InstanceRole } from "../iam/EC2InstanceRole";
 import { BackendPipeline } from "../cicd/BackendPipeline";
 import { ISecret } from "aws-cdk-lib/aws-secretsmanager";
 import { GithubConfig } from "../common/GithubConfig";
+import { HttpLoadBalancer } from "../compute/HttpLoadBalancer";
 
 interface BackendStackProps extends StackProps {
   environment: string;
@@ -63,20 +63,13 @@ export class BackendStack extends Stack {
       applyToLaunchedInstances: true,
     });
 
-    const loadBalancer = new BackendLoadBalancer(
-      this,
-      `Backend-LoadBalancer-${props.environment}`,
-      {
-        environment: props.environment,
-        vpc: props.vpc,
-        securityGroup: props.loadBalancerSecurityGroup,
-        certificate: props.certificate,
-      },
-    );
-
-    this.autoScalingGroup.attachToApplicationTargetGroup(
-      loadBalancer.targetGroup,
-    );
+    const loadBalancer = new HttpLoadBalancer(this, {
+      environment: props.environment,
+      vpc: props.vpc,
+      securityGroup: props.loadBalancerSecurityGroup,
+      certificate: props.certificate,
+      autoScalingGroup: this.autoScalingGroup,
+    }).loadBalancer;
 
     new BackendPipeline(this, {
       environment: props.environment,
@@ -91,9 +84,7 @@ export class BackendStack extends Stack {
     new ARecord(this, `Backend-record-${props.environment}`, {
       zone: props.hostedZone,
       recordName: `api${props.environment == "prod" ? "" : "." + props.environment}`,
-      target: RecordTarget.fromAlias(
-        new LoadBalancerTarget(loadBalancer.applicationLoadBalancer),
-      ),
+      target: RecordTarget.fromAlias(new LoadBalancerTarget(loadBalancer)),
     });
   }
 }
