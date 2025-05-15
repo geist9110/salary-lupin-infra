@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import * as cdk from "aws-cdk-lib";
-import { FrontendStack } from "../lib/frontend/frontend-stack";
+import { FrontendStack } from "../lib/apps/FrontendStack";
 import * as dotenv from "dotenv";
 import { DomainStack } from "../lib/domain/DomainStack";
 import { VpcStack } from "../lib/network/VpcStack";
@@ -102,7 +102,7 @@ const domainStack = new DomainStack(app, "DomainStack", {
   crossRegionReferences: true,
 });
 
-new FrontendStack(app, `FrontendStack-${environment}`, {
+new FrontendStack(app, {
   appName: appName,
   environment: environment,
   github: {
