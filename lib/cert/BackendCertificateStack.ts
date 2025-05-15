@@ -17,16 +17,16 @@ export class BackendCertificateStack extends Stack {
   public readonly albCertificate: Certificate;
   public readonly hostedZone: IHostedZone;
 
-  constructor(
-    scope: Construct,
-    id: string,
-    props: BackendCertificateStackProps,
-  ) {
-    super(scope, id, props);
+  constructor(scope: Construct, props: BackendCertificateStackProps) {
+    super(scope, `Backend-Certificate-Stack-${props.environment}`, props);
 
-    this.hostedZone = route53.HostedZone.fromLookup(this, "HostedZone", {
-      domainName: props.domainName,
-    });
+    this.hostedZone = route53.HostedZone.fromLookup(
+      this,
+      `HostedZone-${props.environment}`,
+      {
+        domainName: props.domainName,
+      },
+    );
 
     this.albCertificate = new Certificate(
       this,

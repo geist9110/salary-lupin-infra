@@ -34,18 +34,14 @@ const vpcStack = new VpcStack(app, {
   },
 });
 
-const backendCertificateStack = new BackendCertificateStack(
-  app,
-  `BackendCertificateStack-${environment}`,
-  {
-    environment: environment,
-    domainName: domainName,
-    env: {
-      account: accountId,
-      region: "ap-northeast-2",
-    },
+const backendCertificateStack = new BackendCertificateStack(app, {
+  environment: environment,
+  domainName: domainName,
+  env: {
+    account: accountId,
+    region: "ap-northeast-2",
   },
-);
+});
 
 const frontendCertificateStack = new FrontendCertificateStack(app, {
   environment: environment,
