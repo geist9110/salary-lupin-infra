@@ -6,8 +6,9 @@ import { WebBucket } from "../storage/WebBucket";
 import { ArtifactBucket } from "../storage/ArtifactBucket";
 import { SPACloudFront } from "../cdn/SPACloudFront";
 import { GithubConfig } from "../common/GithubConfig";
-import { ARecord, HostedZone, RecordTarget } from "aws-cdk-lib/aws-route53";
+import { HostedZone } from "aws-cdk-lib/aws-route53";
 import { CloudFrontTarget } from "aws-cdk-lib/aws-route53-targets";
+import { AliasRecord } from "../dns/AliasRecord";
 
 interface FrontendStackProps extends StackProps {
   appName: string;
@@ -59,10 +60,11 @@ export class FrontendStack extends Stack {
       hostedZone: hostedZone,
     }).distribution;
 
-    new ARecord(this, `Web-ARecord-${props.environment}`, {
-      zone: hostedZone,
-      recordName: `www${props.environment == "prod" ? "" : `.${props.environment}`}`,
-      target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
+    new AliasRecord(this, {
+      environment: props.environment,
+      subDomain: "www",
+      hostedZone: hostedZone,
+      recordTarget: new CloudFrontTarget(distribution),
     });
   }
 }

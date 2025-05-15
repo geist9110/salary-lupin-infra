@@ -1,7 +1,7 @@
 import { Stack, StackProps } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { SecurityGroup, Vpc } from "aws-cdk-lib/aws-ec2";
-import { ARecord, IHostedZone, RecordTarget } from "aws-cdk-lib/aws-route53";
+import { IHostedZone } from "aws-cdk-lib/aws-route53";
 import { LoadBalancerTarget } from "aws-cdk-lib/aws-route53-targets";
 import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
 import { EC2InstanceRole } from "../iam/EC2InstanceRole";
@@ -10,6 +10,7 @@ import { ISecret } from "aws-cdk-lib/aws-secretsmanager";
 import { GithubConfig } from "../common/GithubConfig";
 import { HttpLoadBalancer } from "../compute/HttpLoadBalancer";
 import { EC2AutoScalingGroup } from "../compute/EC2AutoScalingGroup";
+import { AliasRecord } from "../dns/AliasRecord";
 
 interface BackendStackProps extends StackProps {
   environment: string;
@@ -58,10 +59,11 @@ export class BackendStack extends Stack {
       github: props.github,
     });
 
-    new ARecord(this, `Backend-record-${props.environment}`, {
-      zone: props.hostedZone,
-      recordName: `api${props.environment == "prod" ? "" : "." + props.environment}`,
-      target: RecordTarget.fromAlias(new LoadBalancerTarget(loadBalancer)),
+    new AliasRecord(this, {
+      environment: props.environment,
+      hostedZone: props.hostedZone,
+      subDomain: "api",
+      recordTarget: new LoadBalancerTarget(loadBalancer),
     });
   }
 }
