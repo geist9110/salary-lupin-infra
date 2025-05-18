@@ -95,6 +95,7 @@ new BackendStack(app, {
     repository: githubRepoBackend,
     branch: githubBranch,
   },
+  domainName: domainName,
   env: {
     account: accountId,
     region: "ap-northeast-2",
