@@ -114,6 +114,7 @@ new FrontendStack(app, {
   certificateArn: frontendCertificateStack.certificateArn,
   hostedZoneId: frontendCertificateStack.hostedZoneId,
   hostedZoneName: frontendCertificateStack.hostedZoneName,
+  domainName: domainName,
   env: {
     account: accountId,
     region: "ap-northeast-2",
