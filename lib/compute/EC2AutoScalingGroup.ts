@@ -4,6 +4,7 @@ import {
   InstanceClass,
   InstanceSize,
   InstanceType,
+  KeyPair,
   MachineImage,
   SecurityGroup,
   SubnetType,
@@ -17,6 +18,7 @@ interface EC2AutoScalingGroupProps {
   vpc: Vpc;
   securityGroup: SecurityGroup;
   role: Role;
+  keyPairName?: string;
 }
 
 export class EC2AutoScalingGroup extends Construct {
@@ -24,6 +26,14 @@ export class EC2AutoScalingGroup extends Construct {
 
   constructor(scope: Construct, props: EC2AutoScalingGroupProps) {
     super(scope, `EC2-ASG-${props.environment}`);
+
+    const keyPair = props.keyPairName
+      ? KeyPair.fromKeyPairName(
+          this,
+          `KeyPair-${props.environment}`,
+          props.keyPairName,
+        )
+      : undefined;
 
     this.autoScalingGroup = new AutoScalingGroup(
       this,
@@ -38,6 +48,7 @@ export class EC2AutoScalingGroup extends Construct {
         maxCapacity: 2,
         desiredCapacity: 1,
         role: props.role,
+        keyPair: keyPair,
       },
     );
 

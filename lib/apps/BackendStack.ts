@@ -27,6 +27,7 @@ interface BackendStackProps extends StackProps {
   rdsPort: string;
   github: GithubConfig;
   domainName: string;
+  keyPairName?: string;
 }
 
 export class BackendStack extends Stack {
@@ -42,6 +43,7 @@ export class BackendStack extends Stack {
       vpc: props.vpc,
       securityGroup: props.ec2SecurityGroup,
       role: instanceRole,
+      keyPairName: props.keyPairName,
     }).autoScalingGroup;
 
     const loadBalancer = new HttpLoadBalancer(this, {
@@ -67,8 +69,7 @@ export class BackendStack extends Stack {
       `${props.appName}-Origin-Param-${props.environment}`,
       {
         parameterName: `/${props.appName}/${props.environment}/ORIGIN`,
-        stringValue:
-          getRecordName("www", props.environment) + `.${props.domainName}`,
+        stringValue: `https://${getRecordName("www", props.environment)}.${props.domainName}`,
       },
     );
 
