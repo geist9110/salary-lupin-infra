@@ -26,7 +26,7 @@ export class FrontendCodeBuild extends Construct {
         environmentVariables: {
           NODE_ENV: { value: props.environment },
           VITE_API_BASE_URL: {
-            value: `${getRecordName("api", props.environment)}.${props.domainName}`,
+            value: `https://${getRecordName("api", props.environment)}.${props.domainName}`,
           },
         },
       },
