@@ -26,6 +26,8 @@ const githubRepoBackend = process.env.GITHUB_REPO_BACKEND!;
 const githubConnectionArn = process.env.GITHUB_CONNECTION_ARN!;
 const githubBranch = process.env.BRANCH!;
 
+const keyPairName = process.env.KEY_PAIR_NAME!;
+
 const vpcStack = new VpcStack(app, {
   environment: environment,
   appName: appName,
@@ -95,6 +97,8 @@ new BackendStack(app, {
     repository: githubRepoBackend,
     branch: githubBranch,
   },
+  domainName: domainName,
+  keyPairName: keyPairName,
   env: {
     account: accountId,
     region: "ap-northeast-2",
@@ -113,6 +117,7 @@ new FrontendStack(app, {
   certificateArn: frontendCertificateStack.certificateArn,
   hostedZoneId: frontendCertificateStack.hostedZoneId,
   hostedZoneName: frontendCertificateStack.hostedZoneName,
+  domainName: domainName,
   env: {
     account: accountId,
     region: "ap-northeast-2",

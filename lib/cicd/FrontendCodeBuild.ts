@@ -5,10 +5,12 @@ import {
   PipelineProject,
 } from "aws-cdk-lib/aws-codebuild";
 import { Bucket } from "aws-cdk-lib/aws-s3";
+import { getRecordName } from "../util/domainUtil";
 
 interface FrontendCodeBuildProps {
   environment: string;
   artifactBucket: Bucket;
+  domainName: string;
 }
 
 export class FrontendCodeBuild extends Construct {
@@ -23,6 +25,9 @@ export class FrontendCodeBuild extends Construct {
         buildImage: LinuxBuildImage.STANDARD_7_0,
         environmentVariables: {
           NODE_ENV: { value: props.environment },
+          VITE_API_BASE_URL: {
+            value: `https://${getRecordName("api", props.environment)}.${props.domainName}`,
+          },
         },
       },
       buildSpec: BuildSpec.fromSourceFilename("buildspec.yaml"),

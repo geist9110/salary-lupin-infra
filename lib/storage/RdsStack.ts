@@ -41,9 +41,9 @@ export class RdsStack extends Stack {
         instanceType: InstanceType.of(InstanceClass.T3, InstanceSize.MICRO),
         vpc: props.vpc,
         vpcSubnets: props.vpc.selectSubnets({
-          subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+          subnetType: SubnetType.PUBLIC,
         }),
-        publiclyAccessible: false,
+        publiclyAccessible: true,
         multiAz: false,
         allocatedStorage: 20,
         maxAllocatedStorage: 100,

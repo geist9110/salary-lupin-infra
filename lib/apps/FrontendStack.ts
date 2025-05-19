@@ -17,6 +17,7 @@ interface FrontendStackProps extends StackProps {
   certificateArn: string;
   hostedZoneId: string;
   hostedZoneName: string;
+  domainName: string;
 }
 
 export class FrontendStack extends Stack {
@@ -34,6 +35,7 @@ export class FrontendStack extends Stack {
     const project = new FrontendCodeBuild(this, {
       environment: props.environment,
       artifactBucket: artifactBucket,
+      domainName: props.domainName,
     }).project;
 
     const codePipeline = new FrontendPipeline(this, {

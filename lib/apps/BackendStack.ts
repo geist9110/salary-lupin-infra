@@ -11,6 +11,8 @@ import { GithubConfig } from "../common/GithubConfig";
 import { HttpLoadBalancer } from "../compute/HttpLoadBalancer";
 import { EC2AutoScalingGroup } from "../compute/EC2AutoScalingGroup";
 import { AliasRecord } from "../dns/AliasRecord";
+import { StringParameter } from "aws-cdk-lib/aws-ssm";
+import { getRecordName } from "../util/domainUtil";
 
 interface BackendStackProps extends StackProps {
   environment: string;
@@ -24,6 +26,8 @@ interface BackendStackProps extends StackProps {
   rdsUrl: string;
   rdsPort: string;
   github: GithubConfig;
+  domainName: string;
+  keyPairName?: string;
 }
 
 export class BackendStack extends Stack {
@@ -39,6 +43,7 @@ export class BackendStack extends Stack {
       vpc: props.vpc,
       securityGroup: props.ec2SecurityGroup,
       role: instanceRole,
+      keyPairName: props.keyPairName,
     }).autoScalingGroup;
 
     const loadBalancer = new HttpLoadBalancer(this, {
@@ -58,6 +63,15 @@ export class BackendStack extends Stack {
       rdsPort: props.rdsPort,
       github: props.github,
     });
+
+    new StringParameter(
+      this,
+      `${props.appName}-Origin-Param-${props.environment}`,
+      {
+        parameterName: `/${props.appName}/${props.environment}/ORIGIN`,
+        stringValue: `https://${getRecordName("www", props.environment)}.${props.domainName}`,
+      },
+    );
 
     new AliasRecord(this, {
       environment: props.environment,

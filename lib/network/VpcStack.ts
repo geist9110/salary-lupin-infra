@@ -23,7 +23,7 @@ export class VpcStack extends Stack {
         },
         {
           name: "private-subnet",
-          subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+          subnetType: SubnetType.PRIVATE_ISOLATED,
         },
       ],
     });
