@@ -13,7 +13,9 @@ Salary Lupin은 그럴 때 켜는 **가장 진지한 가벼움**입니다.
 
 [🔗 웹 사이트 바로가기](https://www.salary-lupin.com)
 
-### 👉 레포지토리는 이렇게 운영됩니다.
+<br>
+
+## 👉 레포지토리는 이렇게 운영됩니다.
 
 Salary Lupin의 전체 인프라를 정의한 **IaC(Infrastructure as Code) 프로젝트**입니다.  
 [프론트엔드](https://github.com/geist9110/salary-lupin-fe)
@@ -40,7 +42,9 @@ Salary Lupin의 전체 인프라를 정의한 **IaC(Infrastructure as Code) 프�
 
 </details>
 
-### 🧱 인프라는 이렇게 생겼습니다.
+<br>
+
+## 🧱 인프라는 이렇게 생겼습니다.
 
 ![Structure](.github/assets/infra-architecture.png)
 
@@ -63,7 +67,9 @@ Salary Lupin의 전체 인프라를 정의한 **IaC(Infrastructure as Code) 프�
 
 </details>
 
-### 📦 환경은 이렇게 구성돼야 해요.
+<br>
+
+## 📦 환경은 이렇게 구성돼야 해요.
 
 `.env` 파일은 `env/dev.env`, `env/prod.env`처럼 환경별로 나눠서 사용합니다.
 
@@ -86,7 +92,9 @@ Salary Lupin의 전체 인프라를 정의한 **IaC(Infrastructure as Code) 프�
 
 </details>
 
-### 🚀 배포는 이렇게 합니다.
+<br>
+
+## 🚀 배포는 이렇게 합니다.
 
 1. AWS CLI 인증
 
