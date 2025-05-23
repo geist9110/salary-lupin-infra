@@ -1,21 +1,12 @@
 ![월급 루팡 히어로 섹션](.github/assets/hero-section.png)
 
-**Salary Lupin은 ‘일하지 않기 위해 일하는’ 사람들을 위한 플랫폼입니다.**  
-이곳은 진짜로 아무 일도 하지 않으면서, 일하는 척은 아주 그럴듯하게 할 수 있는 공간입니다.
-
-집중은 흐트러지고, 할 일은 애매하고, 회의는 끝나지 않습니다.  
-그렇다고 탭을 닫기도 뭔가 애매한 이 순간,  
-우리는 브라우저를 열어 무언가를 해야만 합니다.
-
-Salary Lupin은 그럴 때 켜는 **가장 진지한 가벼움**입니다.  
-한 번 들어오면 누구나 월급루팡, 한 번 웃고 나면 다시 직장인.  
-일과 유희의 중간쯤에서, 우리는 당신의 월급루팡을 돕습니다.
+**Salary Lupin은 ‘일하지 않기 위해 일하는’ 사람들을 위한 플랫폼입니다.**
 
 [🔗 웹 사이트 바로가기](https://www.salary-lupin.com)
 
 <br>
 
-## 👉 레포지토리는 이렇게 운영됩니다.
+## ⚙️ 프로젝트 개요
 
 Salary Lupin의 전체 인프라를 정의한 **IaC(Infrastructure as Code) 프로젝트**입니다.  
 [프론트엔드](https://github.com/geist9110/salary-lupin-fe)
@@ -44,7 +35,7 @@ Salary Lupin의 전체 인프라를 정의한 **IaC(Infrastructure as Code) 프�
 
 <br>
 
-## 🧱 인프라는 이렇게 생겼습니다.
+## 🧱 인프라 아키텍처
 
 아래 다이어그램은 Salary Lupin 인프라의 전체 구조를 시각적으로 나타냅니다.  
 화살표는 리소스 간의 연결 관계를 나타내며, **출발 리소스의 색상**으로 표현됩니다.  
@@ -61,6 +52,8 @@ Salary Lupin의 전체 인프라를 정의한 **IaC(Infrastructure as Code) 프�
 | BackendCertificateStack  | 백엔드용 인증서를 관리하는 스택   | ALB용 ACM 인증서 발급                          |
 | SecurityGroupStack       | 보안 그룹을 관리하는 스택      | ALB, EC2, RDS용 Security Group 생성         |
 | RdsStack                 | 데이터베이스 리소스를 관리하는 스택 | MySQL RDS 인스턴스 생성                        |
+
+<br>
 
 ## 📦 환경은 이렇게 구성돼야 해요.
 
@@ -82,7 +75,7 @@ Salary Lupin의 전체 인프라를 정의한 **IaC(Infrastructure as Code) 프�
 
 <br>
 
-## 🚀 배포는 이렇게 합니다.
+## 🚀 배포
 
 1. AWS CLI 인증
 
@@ -110,4 +103,4 @@ NODE_ENV=[env] npm run cdk:deploy -- [스택 ID]
 
 > --[스택 ID]는 CDK에서 배포할 특정 스택 이름을 명시할 때 사용합니다.  
 > [env]는 CDK에서 배포할 환경의 이름을 명시할 때 사용합니다.  
-> ex: NODE_ENV=prod npm run cdk:deploy --Frontend-Stack-prod
+> 예시: NODE_ENV=prod npm run cdk:deploy --Frontend-Stack-prod
