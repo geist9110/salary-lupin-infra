@@ -6,7 +6,7 @@
 
 <br>
 
-## ⚙️ 프로젝트 개요
+## ✨ 프로젝트 개요
 
 Salary Lupin의 전체 인프라를 정의한 **IaC(Infrastructure as Code) 프로젝트**입니다.  
 [프론트엔드](https://github.com/geist9110/salary-lupin-fe)
