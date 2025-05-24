@@ -1,6 +1,10 @@
 # CDK asset staging directory
 .cdk.staging
 cdk.out
+cdk.context.json
+
+# ENV
+env/*
 
 # Created by https://www.toptal.com/developers/gitignore/api/macos,node,jetbrains+all
 # Edit at https://www.toptal.com/developers/gitignore?templates=macos,node,jetbrains+all
